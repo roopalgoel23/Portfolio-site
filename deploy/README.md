@@ -1,103 +1,124 @@
-# 🚀 Deployment Guide — Hostinger VPS
+# 🚀 Deployment Guide — Makeup by Roopal Goel
 
-Complete step-by-step guide to deploy Makeup by Roopal Goel on a Hostinger VPS.
-
----
-
-## Prerequisites
-
-1. **Hostinger VPS** (KVM 1 or higher — Ubuntu 22.04/24.04)
-2. **Domain** (free with Hostinger, or use an existing one)
-3. **GitHub repo** with your code pushed to it
+> **Repo:** https://github.com/roopalgoel23/Portfolio-site.git
+> **Target:** Hostinger KVM VPS (Ubuntu) + MongoDB Atlas
+> **Cost:** ~₹350/month total
 
 ---
 
-## Step 1: Buy VPS & Point Domain
+## 📋 Checklist Before Starting
 
-1. Log into **Hostinger** → VPS → Deploy new server
-2. Choose **Ubuntu 22.04** template
-3. Choose plan: **KVM 1** (1 vCPU, 4GB RAM, 50GB) — sufficient for this site
-4. Note your **VPS IP address** (e.g., `82.xxx.xxx.xxx`)
-5. Go to **Domains** → point your domain's **A record** to the VPS IP:
-   ```
-   Type: A
-   Name: @
-   Value: YOUR_VPS_IP
-   TTL: 3600
-   ```
-   Add a second record for www:
-   ```
-   Type: A
-   Name: www
-   Value: YOUR_VPS_IP
-   TTL: 3600
-   ```
+- [ ] Hostinger VPS purchased (KVM 1, Ubuntu, India/Mumbai)
+- [ ] VPS IP address & root password noted
+- [ ] Domain pointed to VPS (A records set)
+- [ ] GitHub repo ready: `https://github.com/roopalgoel23/Portfolio-site.git`
 
 ---
 
-## Step 2: Push Code to GitHub
+## Step 1 — Buy the Right VPS
 
-On your local machine:
+1. Log into **Hostinger → VPS Hosting**
+2. Choose **KVM 1** plan (1 vCPU, 4GB RAM, 50GB NVMe SSD)
+3. Set **Location: India (Mumbai)**
+4. Set **OS: Ubuntu 22.04 or 24.04**
+5. Set **Template: Clean OS** (no control panel)
+6. Complete purchase
 
-```bash
-cd C:\roopal_portfolio
-git init
-git add .
-git commit -m "Initial commit — production ready"
-git remote add origin https://github.com/YOUR_USERNAME/roopal-portfolio.git
-git push -u origin main
-```
-
-⚠️ **Make sure `.gitignore` excludes `.env` files** — your secrets should NOT go to GitHub.
+After purchase, go to **VPS Dashboard** and note:
+- **IP Address** (e.g., `82.xxx.xxx.xxx`)
+- **Root Password** (or create SSH key)
 
 ---
 
-## Step 3: SSH into the VPS
+## Step 2 — Point Domain to VPS
 
-From Hostinger dashboard, get your SSH credentials, then connect:
+Go to **Hostinger → hPanel → Domains → [your domain] → DNS / Nameservers**
+
+Add two **A records**:
+
+| Type | Name | Points to | TTL |
+|------|------|-----------|-----|
+| A | `@` | `YOUR_VPS_IP` | Default |
+| A | `www` | `YOUR_VPS_IP` | Default |
+
+> ⏱ DNS takes 5–30 minutes. Verify at https://dnschecker.org
+
+---
+
+## Step 3 — SSH into Your VPS
+
+From your computer, open PowerShell:
 
 ```bash
 ssh root@YOUR_VPS_IP
 ```
 
+Enter the root password when prompted.
+
+> **If SSH is blocked**, use the **Browser Terminal** button in Hostinger's VPS dashboard.
+
 ---
 
-## Step 4: Run Server Setup (One-Time)
+## Step 4 — Clone Your Code
 
 ```bash
-# Clone your repo
 cd /var/www
-git clone https://github.com/YOUR_USERNAME/roopal-portfolio.git roopal
+git clone https://github.com/roopalgoel23/Portfolio-site.git roopal
 cd roopal
+```
 
-# Run the one-time setup script
+> If the repo is **private**, use a GitHub Personal Access Token:
+> GitHub → Settings → Developer Settings → Personal Access Tokens → Generate → check "repo" scope
+
+---
+
+## Step 5 — Run One-Time Server Setup
+
+```bash
 bash deploy/setup-server.sh
 ```
 
-This installs: **Node.js 20, PM2, Nginx, Certbot (SSL)**.
+This installs automatically:
+- ✅ Node.js 20
+- ✅ PM2 (process manager)
+- ✅ Nginx (reverse proxy)
+- ✅ Certbot (SSL certificates)
 
 ---
 
-## Step 5: Create Production .env
+## Step 6 — Create Production `.env`
 
 ```bash
 nano /var/www/roopal/server/.env
 ```
 
-Paste your production values (use `deploy/.env.production` as template):
+Paste the following — replace `YOUR_DOMAIN` with your actual domain:
 
 ```env
 PORT=5000
 NODE_ENV=production
-MONGODB_URI=mongodb+srv://makeupbyroopalgoel_db_user:YOUR_PASSWORD@portfoliosite.c0qvnnt.mongodb.net/makeup_roopal_goel?retryWrites=true&w=majority
-JWT_SECRET=YOUR_JWT_SECRET
+
+# CORS — your domain only
+CORS_ORIGINS=https://YOUR_DOMAIN.com,https://www.YOUR_DOMAIN.com
+
+# Database (MongoDB Atlas)
+MONGODB_URI=mongodb+srv://makeupbyroopalgoel_db_user:kBJrD1fpi4bNdGCe@portfoliosite.c0qvnnt.mongodb.net/makeup_roopal_goel?retryWrites=true&w=majority
+
+# JWT
+JWT_SECRET=Ljvm80kK0Dwq6dmsKt8vfmbLqEGoRTTvyxatNRHJwkVYKRLJnUJhby2W6aEGxVBY
 JWT_EXPIRES_IN=7d
+
+# Admin Credentials
 ADMIN_EMAIL=Makeupbyroopalgoel@gmail.com
-ADMIN_PASSWORD=YOUR_ADMIN_PASSWORD
+ADMIN_PASSWORD=Champpoonam23.
+
+# Email (Nodemailer)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=Makeupbyroopalgoel@gmail.com
-SMTP_PASS=YOUR_GMAIL_APP_PASSWORD
+SMTP_PASS=dbjk ugte tqim ztny
+
+# Contact
 CONTACT_TO_EMAIL=Makeupbyroopalgoel@gmail.com
 CONTACT_FROM_NAME=Portfolio Enquiry
 ```
@@ -106,7 +127,7 @@ Save: `Ctrl+O` → `Enter` → `Ctrl+X`
 
 ---
 
-## Step 6: Deploy
+## Step 7 — Deploy the App
 
 ```bash
 cd /var/www/roopal
@@ -114,9 +135,9 @@ bash deploy/deploy.sh
 ```
 
 This will:
-- Install all dependencies
+- Install all dependencies (server + client)
 - Build the React frontend
-- Start the Node.js server with PM2
+- Start the server with PM2
 
 Verify it's running:
 ```bash
@@ -124,12 +145,14 @@ pm2 status
 curl http://localhost:5000/api/health
 ```
 
+You should see: `{"status":"ok","timestamp":"..."}`
+
 ---
 
-## Step 7: Configure Nginx
+## Step 8 — Configure Nginx
 
 ```bash
-# Copy the nginx config
+# Copy the Nginx config
 cp /var/www/roopal/deploy/nginx.conf /etc/nginx/sites-available/roopal
 
 # Edit it — replace YOUR_DOMAIN with your actual domain
@@ -138,7 +161,7 @@ nano /etc/nginx/sites-available/roopal
 # Enable the site
 ln -s /etc/nginx/sites-available/roopal /etc/nginx/sites-enabled/
 
-# Remove default site (optional)
+# Remove default site
 rm -f /etc/nginx/sites-enabled/default
 
 # Test config
@@ -148,56 +171,169 @@ nginx -t
 systemctl restart nginx
 ```
 
-Your site should now be live at `http://YOUR_DOMAIN`!
+Site should now be live at `http://YOUR_DOMAIN`!
 
 ---
 
-## Step 8: Enable SSL (HTTPS)
+## Step 9 — Enable SSL (HTTPS)
 
 ```bash
-certbot --nginx -d YOUR_DOMAIN -d www.YOUR_DOMAIN
+certbot --nginx -d YOUR_DOMAIN.com -d www.YOUR_DOMAIN.com
 ```
 
-Follow the prompts. Certbot will:
-- Generate SSL certificate (free, via Let's Encrypt)
-- Auto-configure Nginx for HTTPS
-- Set up auto-renewal
+Follow the prompts:
+1. Enter your email
+2. Agree to terms
+3. Choose **redirect HTTP → HTTPS** (recommended)
 
-Your site is now at **`https://YOUR_DOMAIN`** ✅
-
----
-
-## Step 9: Update MongoDB Atlas IP Access
-
-1. Go to **MongoDB Atlas** → Network Access
-2. Click **Add IP Address** → Allow access from anywhere (`0.0.0.0/0`)
-   - Or add your VPS IP specifically (more secure)
+Your site is now at **`https://YOUR_DOMAIN.com`** ✅
 
 ---
 
-## Updating the Site Later
+## Step 10 — Allow VPS IP in MongoDB Atlas
+
+1. Go to **MongoDB Atlas → Network Access**
+2. Click **Add IP Address**
+3. Either:
+   - Add `0.0.0.0/0` (allow from anywhere — easiest)
+   - Or add your specific VPS IP (more secure)
+
+---
+
+## Step 11 — Test Everything
+
+- [ ] Visit `https://YOUR_DOMAIN.com` — site loads
+- [ ] Test the contact form — check email for enquiry
+- [ ] Go to `/admin/login` — admin panel works
+- [ ] Upload a test image in admin — verify it appears
+
+---
+
+## 🔄 Updating the Site Later
 
 When you make changes locally and push to GitHub:
 
 ```bash
-# On the VPS:
+# SSH into VPS
+ssh root@YOUR_VPS_IP
+
+# Pull and redeploy
 cd /var/www/roopal
 git pull
 npm run deploy:restart
 ```
 
-Or use the one-liner:
+Or one-liner:
 ```bash
 cd /var/www/roopal && git pull && npm run deploy:restart
 ```
 
 ---
 
-## Useful Commands
+## 🛠 Useful Commands
 
 ```bash
 # Check server status
 pm2 status
+
+# View server logs (real-time)
+pm2 logs makeup-roopal
+
+# Restart server
+pm2 restart makeup-roopal
+
+# Stop server
+pm2 stop makeup-roopal
+
+# Restart Nginx
+systemctl restart nginx
+
+# Check Nginx error logs
+tail -f /var/log/nginx/error.log
+
+# Check SSL certificate status
+certbot certificates
+
+# Check disk space
+df -h
+
+# Check memory usage
+free -m
+```
+
+---
+
+## 🧱 Architecture
+
+```
+Visitor's Browser
+       ↓
+   HTTPS (443)
+       ↓
+    Nginx ←── SSL Certificate (Let's Encrypt)
+       ↓
+  Node.js :5000 (PM2 managed)
+       ├── /api/*         → API routes
+       ├── /uploads/*     → Uploaded images
+       └── /*             → React build (client/dist)
+       ↓
+  MongoDB Atlas (cloud)
+```
+
+---
+
+## 💰 Cost Breakdown
+
+| Item | Cost |
+|------|------|
+| Hostinger KVM 1 | ~₹350/month |
+| Domain (Year 1) | FREE with Hostinger |
+| Domain (Year 2+) | ~₹1,000/year |
+| MongoDB Atlas | FREE (512MB tier) |
+| SSL Certificate | FREE (Let's Encrypt) |
+| **Total** | **~₹350/month** |
+
+---
+
+## 🆘 Troubleshooting
+
+### Site shows "502 Bad Gateway"
+```bash
+pm2 status              # Is the app running?
+pm2 restart makeup-roopal
+pm2 logs makeup-roopal  # Check for errors
+```
+
+### Images not loading
+```bash
+# Check uploads directory
+ls -la /var/www/roopal/server/uploads/
+
+# Check Nginx is serving uploads
+curl -I http://localhost:5000/uploads/test.jpg
+```
+
+### Email not sending
+```bash
+# Check server logs for email errors
+pm2 logs makeup-roopal | grep -i mail
+```
+
+### MongoDB connection error
+```bash
+# Verify the connection string in .env
+cat /var/www/roopal/server/.env | grep MONGODB
+
+# Test connection
+mongosh "mongodb+srv://..." --eval "db.runCommand({ping:1})"
+```
+
+### Nginx config error
+```bash
+nginx -t                        # Test config
+systemctl status nginx          # Check Nginx status
+tail -f /var/log/nginx/error.log # View errors
+```
 
 # View server logs
 pm2 logs makeup-roopal
