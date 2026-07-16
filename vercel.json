@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "buildCommand": "cd client && npm install && npm run build",
+  "outputDirectory": "client/dist",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://makeup-by-roopal-goel.onrender.com/api/$1" }
+  ]
+}

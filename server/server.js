@@ -83,13 +83,15 @@ app.use('/api', contactRoutes);
 app.use('/api', adminRoutes);
 app.use('/api', storageRoutes);
 
-/* ── Production: serve React SPA ─────────────────────── */
+/* ── Production: serve React SPA (if client/dist exists) ── */
 if (process.env.NODE_ENV === 'production') {
   const clientDist = path.join(__dirname, '..', 'client', 'dist');
-  app.use(express.static(clientDist));
-  app.get(/^(?!\/api\/).*/, (_req, res) => {
-    res.sendFile(path.join(clientDist, 'index.html'));
-  });
+  if (fs.existsSync(clientDist)) {
+    app.use(express.static(clientDist));
+    app.get(/^(?!\/api\/).*/, (_req, res) => {
+      res.sendFile(path.join(clientDist, 'index.html'));
+    });
+  }
 }
 
 /* ── Health check ────────────────────────────────────── */
