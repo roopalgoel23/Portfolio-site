@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base ─────────────────────────────────────────────── */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #FAF5F2;
+    color: #2C2A2A;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: #2C2A2A;
+  }
+
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+}
+
+/* ── Components ───────────────────────────────────────── */
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 bg-primary text-white rounded-btn px-8 py-4 font-medium transition-all duration-300;
+  }
+  .btn-primary:hover {
+    @apply bg-accentHover text-primary;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 bg-transparent text-primary border border-primary rounded-btn px-8 py-4 font-medium transition-all duration-300;
+  }
+  .btn-secondary:hover {
+    @apply bg-primary text-white;
+  }
+
+  .card {
+    @apply bg-card border border-line rounded-card p-8 shadow-card;
+  }
+
+  .container-lux {
+    @apply mx-auto w-full max-w-7xl px-6 md:px-8;
+  }
+}
+
+/* ── Scroll Reveal ─────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Skeleton shimmer ──────────────────────────────────── */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: #E6D2CC;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(250, 245, 242, 0.6),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ── Masonry ───────────────────────────────────────────── */
+.masonry-grid {
+  column-gap: 1.5rem;
+}
+@media (min-width: 640px)  { .masonry-grid { column-count: 2; } }
+@media (min-width: 1024px) { .masonry-grid { column-count: 3; } }
+
+.masonry-item {
+  break-inside: avoid;
+  margin-bottom: 1.5rem;
+}
+
+/* ── Swiper overrides ──────────────────────────────────── */
+.swiper-pagination-bullet {
+  background: #2C2A2A;
+  opacity: 0.25;
+}
+.swiper-pagination-bullet-active {
+  background: #2C2A2A;
+  opacity: 1;
+}
+.swiper-button-next,
+.swiper-button-prev {
+  color: #2C2A2A;
+}
+
+/* ── Reduced motion ────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Misc ──────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #FAF5F2;
+}
+::-webkit-scrollbar-thumb {
+  background: #DDD4CC;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #D8C4B6;
+}
