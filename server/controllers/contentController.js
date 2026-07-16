@@ -1,4 +1,5 @@
 const SiteContent = require('../models/SiteContent');
+const { uploadToCloudinary, deleteFromCloudinary } = require('../middleware/upload');
 
 /**
  * GET /api/content
@@ -56,9 +57,20 @@ exports.uploadHeroImage = async (req, res, next) => {
       return res.status(400).json({ message: 'No image file uploaded.' });
     }
 
-    const imageUrl = `/uploads/${req.file.filename}`;
+    // Upload to Cloudinary
+    const result = await uploadToCloudinary(req.file, 'portfolio/content', 'image');
+    const imageUrl = result.url;
 
     let content = await SiteContent.findOne();
+
+    // Delete old hero image from Cloudinary if it was a Cloudinary URL
+    if (content && content.heroImage && content.heroImage.includes('cloudinary')) {
+      try {
+        const oldPublicId = content.heroImage.split('/').slice(-2).join('/').split('.')[0];
+        if (oldPublicId) await deleteFromCloudinary(oldPublicId, 'image');
+      } catch (_) { /* best-effort cleanup */ }
+    }
+
     if (!content) {
       content = new SiteContent({ heroImage: imageUrl });
     } else {
@@ -81,7 +93,10 @@ exports.uploadAboutImages = async (req, res, next) => {
       return res.status(400).json({ message: 'No image files uploaded.' });
     }
 
-    const newImages = req.files.map((f) => `/uploads/${f.filename}`);
+    // Upload all files to Cloudinary
+    const uploadPromises = req.files.map((f) => uploadToCloudinary(f, 'portfolio/content', 'image'));
+    const results = await Promise.all(uploadPromises);
+    const newImages = results.map((r) => r.url);
 
     let content = await SiteContent.findOne();
     if (!content) {

@@ -7,6 +7,8 @@ import {
   Heart,
   Star,
   HelpCircle,
+  HardDrive,
+  Minimize2,
   LogOut,
   ExternalLink,
   Menu,
@@ -22,7 +24,9 @@ const NAV_ITEMS = [
   { to: '/admin/portfolio',    label: 'Portfolio',    icon: ImageIcon },
   { to: '/admin/brides',       label: 'Brides',       icon: Heart },
   { to: '/admin/testimonials', label: 'Testimonials', icon: Star },
-  { to: '/admin/faqs',         label: 'FAQs',         icon: HelpCircle }
+  { to: '/admin/faqs',         label: 'FAQs',         icon: HelpCircle },
+  { to: '/admin/storage',      label: 'Storage',      icon: HardDrive },
+  { to: '/admin/compress',     label: 'Compress',     icon: Minimize2 }
 ];
 
 export default function AdminLayout() {
@@ -37,7 +41,7 @@ export default function AdminLayout() {
 
   return (
     <ConfirmProvider>
-      <div className="flex min-h-screen bg-base">
+      <div className="admin-app flex min-h-screen bg-base">
         {/* ── Sidebar ──────────────────────────────────── */}
         <aside
           className={`fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r border-line bg-card transition-transform duration-300 lg:translate-x-0 ${

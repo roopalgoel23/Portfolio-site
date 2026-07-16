@@ -34,7 +34,7 @@ export default function useScrollReveal() {
           }
         });
       },
-      { threshold: 0.12, rootMargin: '0px 0px -60px 0px' }
+      { threshold: 0.05, rootMargin: '0px 0px -40px 0px' }
     );
 
     observeEls();
@@ -43,7 +43,15 @@ export default function useScrollReveal() {
     const mutationObserver = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
-          if (node.nodeType === 1) observeEls(node);
+          if (node.nodeType === 1) {
+            observeEls(node);
+            // Also re-scan the whole document in case .reveal was nested
+            // inside an element that changed (e.g. loading → data rendered)
+            requestAnimationFrame(() => {
+              const hidden = document.querySelectorAll('.reveal:not(.is-visible)');
+              hidden.forEach((el) => observerRef.current?.observe(el));
+            });
+          }
         });
       });
     });

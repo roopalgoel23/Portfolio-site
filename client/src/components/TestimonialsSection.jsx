@@ -99,9 +99,17 @@ export default function TestimonialsSection() {
                     </p>
 
                     <div className="mt-6 flex items-center gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent font-heading text-lg font-600 text-primary">
-                        {t.clientName?.charAt(0).toUpperCase()}
-                      </div>
+                      {t.photo ? (
+                        <img
+                          src={assetUrl(t.photo)}
+                          alt={t.clientName}
+                          className="h-12 w-12 rounded-full object-cover ring-2 ring-accentHover"
+                        />
+                      ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent font-heading text-lg font-600 text-primary">
+                          {t.clientName?.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                       <div>
                         <p className="font-heading text-lg font-600 text-primary">
                           {t.clientName}

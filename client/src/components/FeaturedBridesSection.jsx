@@ -1,9 +1,10 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Pagination } from 'swiper/modules';
+import { Autoplay, Pagination, Navigation } from 'swiper/modules';
 import { X, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import 'swiper/css';
 import 'swiper/css/pagination';
+import 'swiper/css/navigation';
 
 import api, { assetUrl } from '../api/axios';
 import useFetch from '../hooks/useFetch';
@@ -22,6 +23,10 @@ export default function FeaturedBridesSection() {
   );
 
   const [galleryBride, setGalleryBride] = useState(null);
+  const swiperRef = useRef(null);
+
+  const goNext = useCallback(() => swiperRef.current?.slideNext(), []);
+  const goPrev = useCallback(() => swiperRef.current?.slidePrev(), []);
 
   const items = (() => {
     if (!brides || !brides.length) return FALLBACK_BRIDES;
@@ -69,14 +74,24 @@ export default function FeaturedBridesSection() {
         {loading ? (
           <SectionSkeleton />
         ) : (
-          <div>
+          <div className="relative">
+            {/* Left arrow */}
+            <button
+              onClick={goPrev}
+              aria-label="Previous"
+              className="absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-white/90 p-3 shadow-card transition-all hover:bg-white active:scale-95 sm:flex"
+            >
+              <ChevronLeft size={24} className="text-primary" strokeWidth={1.5} />
+            </button>
+
             <Swiper
-              modules={[Autoplay, Pagination]}
+              modules={[Autoplay, Pagination, Navigation]}
               spaceBetween={24}
               slidesPerView={1}
               autoplay={{ delay: 4000, disableOnInteraction: false }}
               loop={items.length > 3}
               pagination={{ clickable: true }}
+              onSwiper={(swiper) => { swiperRef.current = swiper; }}
               breakpoints={{
                 640:  { slidesPerView: 2 },
                 1024: { slidesPerView: 3 }
@@ -119,6 +134,15 @@ export default function FeaturedBridesSection() {
                 );
               })}
             </Swiper>
+
+            {/* Right arrow */}
+            <button
+              onClick={goNext}
+              aria-label="Next"
+              className="absolute right-0 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-white/90 p-3 shadow-card transition-all hover:bg-white active:scale-95 sm:flex"
+            >
+              <ChevronRight size={24} className="text-primary" strokeWidth={1.5} />
+            </button>
           </div>
         )}
       </div>

@@ -17,6 +17,7 @@ const testimonialRoutes   = require('./routes/testimonialRoutes');
 const faqRoutes           = require('./routes/faqRoutes');
 const contactRoutes       = require('./routes/contactRoutes');
 const adminRoutes         = require('./routes/adminRoutes');
+const storageRoutes       = require('./routes/storageRoutes');
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
@@ -44,20 +45,12 @@ app.use(helmet({
   contentSecurityPolicy: false // CSP handled by Nginx in production
 }));
 
-// CORS — locked down in production
-const allowedOrigins = process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(',').map(s => s.trim())
-  : null; // null = allow all (dev mode)
-
+// CORS — allow all origins (preview mode)
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (curl, postman, same-origin)
-    if (!origin || !allowedOrigins) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error('Not allowed by CORS'));
-  },
+  origin: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 
 app.use(express.json({ limit: '10mb' }));
@@ -88,6 +81,7 @@ app.use('/api', testimonialRoutes);
 app.use('/api', faqRoutes);
 app.use('/api', contactRoutes);
 app.use('/api', adminRoutes);
+app.use('/api', storageRoutes);
 
 /* ── Production: serve React SPA ─────────────────────── */
 if (process.env.NODE_ENV === 'production') {

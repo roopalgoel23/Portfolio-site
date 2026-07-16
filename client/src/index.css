@@ -124,6 +124,73 @@
   color: #2C2A2A;
 }
 
+/* ── Admin Panel: Clean White Theme ────────────────────── */
+/* Overrides the warm beige palette for a professional admin look */
+
+.admin-app {
+  background-color: #FFFFFF !important;
+  --tw-color-base:        #FFFFFF;
+  --tw-color-card:        #FFFFFF;
+  --tw-color-accent:      #F4F5F7;
+  --tw-color-accentHover: #E8EAED;
+  --tw-color-line:        #E5E7EB;
+}
+
+/* Admin root → light grey (gives contrast to white cards) */
+.admin-app,
+.admin-app.bg-base {
+  background-color: #F8F9FA !important;
+}
+
+/* Admin background → light grey */
+.admin-app .bg-base {
+  background-color: #F8F9FA !important;
+}
+
+/* Admin cards → white with subtle border */
+.admin-app .bg-card,
+.admin-app .card {
+  background-color: #FFFFFF !important;
+  border-color: #E5E7EB !important;
+}
+
+/* Admin accent backgrounds (used in stat tiles, hover states) */
+.admin-app .bg-accent\/20,
+.admin-app .bg-accent\/30,
+.admin-app .bg-accent\/40 {
+  background-color: #F3F4F6 !important;
+}
+
+.admin-app .bg-accent {
+  background-color: #F3F4F6 !important;
+}
+
+.admin-app .hover\:bg-accent:hover {
+  background-color: #F3F4F6 !important;
+}
+
+/* Admin hover background (icon buttons, ghost buttons) */
+.admin-app .hover\:bg-card:hover {
+  background-color: #F8F9FA !important;
+}
+
+/* Admin borders → light grey */
+.admin-app .border-line,
+.admin-app .border-line {
+  border-color: #E5E7EB !important;
+}
+
+/* Admin scrollbar */
+.admin-app ::-webkit-scrollbar-track {
+  background: #FFFFFF;
+}
+.admin-app ::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+}
+.admin-app ::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
 /* ── Reduced motion ────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *,
