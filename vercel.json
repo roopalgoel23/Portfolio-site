@@ -3,6 +3,7 @@
   "buildCommand": "cd client && npm install && npm run build",
   "outputDirectory": "client/dist",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://roopal-portfolio-production.up.railway.app/api/$1" }
+    { "source": "/api/(.*)", "destination": "https://roopal-portfolio-production.up.railway.app/api/$1" },
+    { "source": "/((?!api).*)", "destination": "/index.html" }
   ]
 }
