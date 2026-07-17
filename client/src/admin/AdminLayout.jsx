@@ -9,6 +9,7 @@ import {
   HelpCircle,
   HardDrive,
   Minimize2,
+  Mail,
   LogOut,
   ExternalLink,
   Menu,
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { to: '/admin/brides',       label: 'Brides',       icon: Heart },
   { to: '/admin/testimonials', label: 'Testimonials', icon: Star },
   { to: '/admin/faqs',         label: 'FAQs',         icon: HelpCircle },
+  { to: '/admin/enquiries',   label: 'Enquiries',    icon: Mail },
   { to: '/admin/storage',      label: 'Storage',      icon: HardDrive },
   { to: '/admin/compress',     label: 'Compress',     icon: Minimize2 }
 ];
