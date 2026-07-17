@@ -99,6 +99,10 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.get('/', (_req, res) => {
+  res.json({ status: 'ok', service: 'makeup-by-roopal-goel' });
+});
+
 /* ── 404 & Error handlers ────────────────────────────── */
 app.use((req, res) => {
   res.status(404).json({ message: `Route not found: ${req.method} ${req.originalUrl}` });
