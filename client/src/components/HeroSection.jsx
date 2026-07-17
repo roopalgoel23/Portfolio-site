@@ -69,21 +69,18 @@ export default function HeroSection() {
         <div className="reveal order-1 lg:order-2">
           {loading ? (
             <Skeleton className="aspect-[3/4] w-full rounded-card" />
-          ) : (
+          ) : heroImage ? (
             <div className="overflow-hidden rounded-card">
               <img
-                src={heroImage || FALLBACK_HERO}
+                src={heroImage}
                 alt="Roopal Goel — Bridal Makeup Artist"
                 className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
                 loading="eager"
               />
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </section>
   );
 }
-
-const FALLBACK_HERO =
-  'https://images.unsplash.com/photo-1595959183082-7b570b7e08e2?auto=format&fit=crop&w=900&q=80';

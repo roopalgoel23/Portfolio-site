@@ -7,18 +7,6 @@ import SectionSkeleton from './SectionSkeleton';
 
 const CATEGORIES = ['All', 'Bridal', 'Engagement', 'Mehendi', 'Party', 'Editorial', 'Pre-Wedding'];
 
-const FALLBACK_PORTFOLIO = [
-  { type:'photo', category:'bridal',     caption:'Traditional bridal look',   src:'https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=800&q=80' },
-  { type:'photo', category:'bridal',     caption:'Reception bridal glow',     src:'https://images.unsplash.com/photo-1595959183082-7b570b7e08e2?auto=format&fit=crop&w=800&q=80' },
-  { type:'photo', category:'engagement', caption:'Soft glam engagement',      src:'https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=800&q=80' },
-  { type:'photo', category:'mehendi',    caption:'Fresh mehendi morning',     src:'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80' },
-  { type:'photo', category:'party',      caption:'Bold party glam',           src:'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80' },
-  { type:'photo', category:'bridal',     caption:'Royal bridal elegance',     src:'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?auto=format&fit=crop&w=800&q=80' },
-  { type:'video', category:'bridal',     caption:'Bridal makeup reel',        src:'https://images.unsplash.com/photo-1457972729786-0411a3b2b626?auto=format&fit=crop&w=800&q=80', videoUrl:'https://player.vimeo.com/video/76979871' },
-  { type:'photo', category:'engagement', caption:'Golden hour engagement',    src:'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80' },
-  { type:'photo', category:'party',      caption:'Festive soirée look',       src:'https://images.unsplash.com/photo-1456926631375-92c8ce872def?auto=format&fit=crop&w=800&q=80' }
-];
-
 // Build dynamic tab list: 'All' + preset categories (that exist in data) + any custom categories
 function buildCategoryTabs(allItems) {
   const presetSet = new Set(CATEGORIES.slice(1).map((c) => c.toLowerCase()));
@@ -43,18 +31,16 @@ export default function PortfolioSection() {
     () => api.get('/api/portfolio').then((r) => r.data)
   );
 
-  // Use API data if it has any items with real media; map src/videoUrl through assetUrl
+  // Use API data; map src/videoUrl through assetUrl
   const allItems = (() => {
-    if (!items || !items.length) return FALLBACK_PORTFOLIO;
-    const mapped = items
+    if (!items || !items.length) return [];
+    return items
       .map((item) => ({
         ...item,
         src:      item.src      ? assetUrl(item.src)      : '',
         videoUrl: item.videoUrl ? assetUrl(item.videoUrl) : ''
       }))
-      // Only keep items that have a displayable image or a video
       .filter((item) => item.src || item.videoUrl);
-    return mapped.length ? mapped : FALLBACK_PORTFOLIO;
   })();
 
   const filtered =
@@ -75,6 +61,7 @@ export default function PortfolioSection() {
   }, []);
 
   if (error) return null;
+  if (!loading && allItems.length === 0) return null;
 
   return (
     <section id="portfolio" className="bg-card py-24">

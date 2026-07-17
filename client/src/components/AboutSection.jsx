@@ -4,12 +4,6 @@ import api, { assetUrl } from '../api/axios';
 import useFetch from '../hooks/useFetch';
 import Skeleton from './Skeleton';
 
-const FALLBACK_IMAGES = [
-  'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80',
-  'https://images.unsplash.com/photo-1457972729786-0411a3b2b626?auto=format&fit=crop&w=600&q=80'
-];
-
 export default function AboutSection() {
   const { data: content, loading } = useFetch(
     () => api.get('/api/content').then((r) => r.data)
@@ -18,11 +12,94 @@ export default function AboutSection() {
   const aboutImages =
     content?.aboutImages && content.aboutImages.length
       ? content.aboutImages.map((img) => assetUrl(img))
-      : FALLBACK_IMAGES;
+      : [];
 
   const scrollTo = (e, id) => {
     e.preventDefault();
     document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // ── Adaptive image layout based on how many images exist ──
+  const renderImages = () => {
+    const count = aboutImages.length;
+
+    if (count === 0) return null;
+
+    if (count === 1) {
+      return (
+        <div className="flex h-full items-center justify-center">
+          <div className="overflow-hidden rounded-card">
+            <img
+              src={aboutImages[0]}
+              alt="Makeup by Roopal Goel"
+              className="h-[500px] w-full max-w-[400px] object-cover transition-transform duration-300 hover:scale-105"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      );
+    }
+
+    if (count === 2) {
+      return (
+        <div className="grid h-full grid-cols-2 gap-4">
+          <div className="flex items-center">
+            <div className="overflow-hidden rounded-card">
+              <img
+                src={aboutImages[0]}
+                alt="Makeup by Roopal Goel"
+                className="h-[460px] w-full max-w-[280px] object-cover transition-transform duration-300 hover:scale-105"
+                loading="lazy"
+              />
+            </div>
+          </div>
+          <div className="flex items-end pb-8">
+            <div className="overflow-hidden rounded-card">
+              <img
+                src={aboutImages[1]}
+                alt="Makeup by Roopal Goel"
+                className="h-[300px] w-full max-w-[260px] object-cover transition-transform duration-300 hover:scale-105"
+                loading="lazy"
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // 3+ images — original staggered layout (uses first 3)
+    return (
+      <div className="grid h-full grid-cols-2 gap-4">
+        <div className="flex items-start">
+          <div className="overflow-hidden rounded-card">
+            <img
+              src={aboutImages[0]}
+              alt="Makeup by Roopal Goel"
+              className="h-[500px] w-full max-w-[260px] object-cover transition-transform duration-300 hover:scale-105"
+              loading="lazy"
+            />
+          </div>
+        </div>
+        <div className="flex flex-col gap-4 pt-16">
+          <div className="overflow-hidden rounded-card">
+            <img
+              src={aboutImages[1]}
+              alt="Makeup by Roopal Goel"
+              className="h-[220px] w-full object-cover transition-transform duration-300 hover:scale-105"
+              loading="lazy"
+            />
+          </div>
+          <div className="overflow-hidden rounded-card">
+            <img
+              src={aboutImages[2]}
+              alt="Makeup by Roopal Goel"
+              className="h-[240px] w-full object-cover transition-transform duration-300 hover:scale-105"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -75,36 +152,7 @@ export default function AboutSection() {
               </div>
             </div>
           ) : (
-            <div className="grid h-full grid-cols-2 gap-4">
-              <div className="flex items-start">
-                <div className="overflow-hidden rounded-card">
-                  <img
-                    src={aboutImages[0]}
-                    alt="Bridal makeup by Roopal"
-                    className="h-[500px] w-full max-w-[260px] object-cover transition-transform duration-300 hover:scale-105"
-                    loading="lazy"
-                  />
-                </div>
-              </div>
-              <div className="flex flex-col gap-4 pt-16">
-                <div className="overflow-hidden rounded-card">
-                  <img
-                    src={aboutImages[1]}
-                    alt="Engagement makeup by Roopal"
-                    className="h-[220px] w-full object-cover transition-transform duration-300 hover:scale-105"
-                    loading="lazy"
-                  />
-                </div>
-                <div className="overflow-hidden rounded-card">
-                  <img
-                    src={aboutImages[2]}
-                    alt="Party makeup by Roopal"
-                    className="h-[240px] w-full object-cover transition-transform duration-300 hover:scale-105"
-                    loading="lazy"
-                  />
-                </div>
-              </div>
-            </div>
+            renderImages()
           )}
         </div>
       </div>
