@@ -17,6 +17,9 @@ exports.sendContact = async (req, res, next) => {
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT) || 587,
       secure: (Number(process.env.SMTP_PORT) || 587) === 465,
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
@@ -66,6 +69,22 @@ exports.sendContact = async (req, res, next) => {
 
     res.json({ message: 'Your message has been sent successfully!' });
   } catch (err) {
+    console.error('Contact form error:', err.message);
+
+    // SMTP errors → user-friendly message
+    if (err.code === 'ETIMEDOUT' || err.code === 'ESOCKET' || err.code === 'ECONNECTION') {
+      return res.status(503).json({
+        message: 'Could not send email right now. Please try again later or contact us directly on WhatsApp.'
+      });
+    }
+
+    // Auth errors
+    if (err.responseCode === 535 || err.code === 'EAUTH') {
+      return res.status(503).json({
+        message: 'Email service is not configured correctly. Please contact us on WhatsApp.'
+      });
+    }
+
     next(err);
   }
 };

@@ -22,6 +22,9 @@ const storageRoutes       = require('./routes/storageRoutes');
 const app  = express();
 const PORT = process.env.PORT || 5000;
 
+/* ── Trust proxy (Railway/Vercel reverse proxy) ─────── */
+app.set('trust proxy', 1);
+
 /* ── MongoDB ─────────────────────────────────────────── */
 mongoose
   .connect(process.env.MONGODB_URI)
