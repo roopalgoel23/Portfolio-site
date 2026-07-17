@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { Plus, Trash2, Pencil, Star, X, Check, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, Pencil, Star, X, Check, Loader2, ChevronDown, ChevronUp, Upload, ImageIcon, Link2 } from 'lucide-react';
 import api from '../../api/axios';
 import {
   FieldLabel,
@@ -13,6 +13,8 @@ import {
   IconButton
 } from '../components/AdminUI';
 import { useConfirm } from '../components/ConfirmModal';
+import MediaPicker from '../components/MediaPicker';
+import { assetUrl } from '../../api/axios';
 
 const OCCASIONS = ['Wedding', 'Engagement', 'Reception', 'Mehendi', 'Party', 'Other'];
 
@@ -28,13 +30,18 @@ export default function TestimonialsPage() {
     clientName: '',
     occasion: 'Wedding',
     rating: 5,
-    review: ''
+    review: '',
+    photo: ''
   });
+  const [showAddPicker, setShowAddPicker] = useState(false);
+  const [uploadingAddPhoto, setUploadingAddPhoto] = useState(false);
 
   // Edit state
   const [editId, setEditId] = useState(null);
   const [editItem, setEditItem] = useState(null);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [showEditPicker, setShowEditPicker] = useState(false);
+  const [uploadingEditPhoto, setUploadingEditPhoto] = useState(false);
 
   // ── Fetch ──
   const fetchItems = useCallback(async () => {
@@ -73,6 +80,87 @@ export default function TestimonialsPage() {
     </div>
   );
 
+  // ── Upload photo (file) for add form ──
+  const handleAddPhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingAddPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const { data } = await api.post('/api/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setNewItem((prev) => ({ ...prev, photo: data.path }));
+      toast.success('Photo uploaded!');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Upload failed');
+    } finally {
+      setUploadingAddPhoto(false);
+      e.target.value = '';
+    }
+  };
+
+  // ── Upload photo (file) for edit form ──
+  const handleEditPhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingEditPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const { data } = await api.post('/api/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setEditItem((prev) => ({ ...prev, photo: data.path }));
+      toast.success('Photo uploaded!');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Upload failed');
+    } finally {
+      setUploadingEditPhoto(false);
+      e.target.value = '';
+    }
+  };
+
+  // ── Reusable photo field component ──
+  const PhotoField = ({ photo, onUpload, onPick, onClear, uploading }) => (
+    <div>
+      <FieldLabel>Client Photo</FieldLabel>
+      <div className="flex flex-wrap items-center gap-3">
+        {photo ? (
+          <div className="group relative">
+            <img
+              src={assetUrl(photo)}
+              alt="Client"
+              className="h-20 w-20 rounded-full border border-line object-cover"
+            />
+            <button
+              onClick={onClear}
+              className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white"
+            >
+              <X size={12} />
+            </button>
+          </div>
+        ) : null}
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => onPick()}
+            className="inline-flex items-center gap-1.5 rounded-btn border border-line px-3 py-2 font-body text-xs font-500 text-secondary transition-colors hover:bg-card"
+          >
+            <ImageIcon size={14} />
+            Browse Library
+          </button>
+          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-btn border border-line px-3 py-2 font-body text-xs font-500 text-secondary transition-colors hover:bg-card">
+            {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+            {uploading ? 'Uploading...' : 'Upload New'}
+            <input type="file" accept="image/*" onChange={onUpload} className="hidden" />
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+
   // ── Add ──
   const handleAdd = async () => {
     if (!newItem.clientName.trim()) {
@@ -87,10 +175,11 @@ export default function TestimonialsPage() {
     try {
       const { data } = await api.post('/api/testimonials', {
         ...newItem,
+        photo: newItem.photo || undefined,
         order: items.length
       });
       setItems([...items, data]);
-      setNewItem({ clientName: '', occasion: 'Wedding', rating: 5, review: '' });
+      setNewItem({ clientName: '', occasion: 'Wedding', rating: 5, review: '', photo: '' });
       setShowAdd(false);
       toast.success('Testimonial added!');
     } catch (err) {
@@ -119,6 +208,7 @@ export default function TestimonialsPage() {
         occasion: editItem.occasion,
         rating: editItem.rating,
         review: editItem.review,
+        photo: editItem.photo || '',
         order: editItem.order
       });
       setItems(items.map((i) => (i._id === editId ? data : i)));
@@ -216,6 +306,15 @@ export default function TestimonialsPage() {
               placeholder="Roopal made me feel like the most beautiful bride..."
             />
           </div>
+          <div className="mt-5">
+            <PhotoField
+              photo={newItem.photo}
+              uploading={uploadingAddPhoto}
+              onUpload={handleAddPhotoUpload}
+              onPick={() => setShowAddPicker(true)}
+              onClear={() => setNewItem({ ...newItem, photo: '' })}
+            />
+          </div>
           <div className="mt-6 flex justify-end gap-3">
             <AdminButton variant="secondary" onClick={() => setShowAdd(false)}>
               Cancel
@@ -270,6 +369,13 @@ export default function TestimonialsPage() {
                     onChange={(e) => setEditItem({ ...editItem, review: e.target.value })}
                   />
                 </div>
+                <PhotoField
+                  photo={editItem.photo || ''}
+                  uploading={uploadingEditPhoto}
+                  onUpload={handleEditPhotoUpload}
+                  onPick={() => setShowEditPicker(true)}
+                  onClear={() => setEditItem({ ...editItem, photo: '' })}
+                />
                 <div className="flex justify-end gap-3">
                   <AdminButton variant="secondary" onClick={cancelEdit}>
                     Cancel
@@ -285,9 +391,17 @@ export default function TestimonialsPage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <div className="mb-2 flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent font-heading font-600 text-primary">
-                      {item.clientName?.charAt(0)}
-                    </div>
+                    {item.photo ? (
+                      <img
+                        src={assetUrl(item.photo)}
+                        alt={item.clientName}
+                        className="h-10 w-10 rounded-full object-cover ring-1 ring-accentHover"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent font-heading font-600 text-primary">
+                        {item.clientName?.charAt(0)}
+                      </div>
+                    )}
                     <div>
                       <h4 className="font-heading text-base font-600 text-primary">
                         {item.clientName}
@@ -337,6 +451,22 @@ export default function TestimonialsPage() {
           </AdminCard>
         )}
       </div>
+
+      {/* ── Media Pickers ── */}
+      <MediaPicker
+        open={showAddPicker}
+        onClose={() => setShowAddPicker(false)}
+        onSelect={(url) => setNewItem((prev) => ({ ...prev, photo: url }))}
+        type="image"
+        title="Choose Client Photo"
+      />
+      <MediaPicker
+        open={showEditPicker}
+        onClose={() => setShowEditPicker(false)}
+        onSelect={(url) => setEditItem((prev) => ({ ...prev, photo: url }))}
+        type="image"
+        title="Choose Client Photo"
+      />
     </div>
   );
 }

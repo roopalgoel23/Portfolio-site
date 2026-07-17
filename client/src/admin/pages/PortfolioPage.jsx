@@ -12,6 +12,7 @@ import {
   IconButton
 } from '../components/AdminUI';
 import { useConfirm } from '../components/ConfirmModal';
+import MediaPicker from '../components/MediaPicker';
 
 const CATEGORIES = ['bridal', 'engagement', 'mehendi', 'party', 'editorial', 'pre-wedding'];
 const CUSTOM_VALUE = '__custom__';
@@ -48,6 +49,8 @@ export default function PortfolioPage() {
   const [videoMode, setVideoMode] = useState('upload'); // 'upload' or 'url'
   const [customCat, setCustomCat] = useState(''); // custom category text for photos
   const [customCatVideo, setCustomCatVideo] = useState(''); // custom category text for videos
+  const [showPhotoPicker, setShowPhotoPicker] = useState(false);
+  const [showVideoPicker, setShowVideoPicker] = useState(false);
 
   // ── Fetch ──
   const fetchItems = useCallback(async () => {
@@ -76,21 +79,25 @@ export default function PortfolioPage() {
 
   // ── Photo: upload ──
   const handlePhotoUpload = async () => {
-    if (!photoForm.file) {
+    if (!photoForm.file && !photoForm._libraryUrl) {
       toast.error('Please select an image');
       return;
     }
     setUploadingPhoto(true);
     try {
-      // Upload file to get server-side path
-      const formData = new FormData();
-      formData.append('file', photoForm.file);
-
-      const { data: uploadData } = await api.post('/api/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-
-      const src = uploadData.path;
+      let src;
+      if (photoForm._libraryUrl) {
+        // Use existing image from library
+        src = photoForm._libraryUrl;
+      } else {
+        // Upload file to get server-side path
+        const formData = new FormData();
+        formData.append('file', photoForm.file);
+        const { data: uploadData } = await api.post('/api/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        src = uploadData.path;
+      }
 
       const resolvedCat = photoForm.category === CUSTOM_VALUE ? customCat.trim().toLowerCase() : photoForm.category;
       if (!resolvedCat) { toast.error('Please enter a category name'); return; }
@@ -104,7 +111,7 @@ export default function PortfolioPage() {
       });
 
       setItems([...items, data]);
-      setPhotoForm({ file: null, preview: '', category: 'bridal', caption: '' });
+      setPhotoForm({ file: null, preview: '', category: 'bridal', caption: '', _libraryUrl: null });
       setCustomCat('');
       toast.success('Photo added to portfolio!');
     } catch (err) {
@@ -248,23 +255,33 @@ export default function PortfolioPage() {
           {/* Drop zone */}
           <div className="mb-5">
             {!photoForm.preview ? (
-              <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-btn border-2 border-dashed border-line py-12 transition-colors duration-300 hover:border-accentHover">
-                <Upload size={32} className="text-secondary" />
-                <div className="text-center">
-                  <p className="font-body text-sm font-600 text-primary">
-                    Click to upload or drag &amp; drop
-                  </p>
-                  <p className="font-body text-xs text-secondary">
-                    JPEG, PNG, WEBP up to 100MB
-                  </p>
-                </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-              </label>
+              <div className="flex flex-col items-center gap-3">
+                <label className="flex w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-btn border-2 border-dashed border-line py-12 transition-colors duration-300 hover:border-accentHover">
+                  <Upload size={32} className="text-secondary" />
+                  <div className="text-center">
+                    <p className="font-body text-sm font-600 text-primary">
+                      Click to upload or drag &amp; drop
+                    </p>
+                    <p className="font-body text-xs text-secondary">
+                      JPEG, PNG, WEBP up to 100MB
+                    </p>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPhotoPicker(true)}
+                  className="inline-flex items-center gap-1.5 rounded-btn border border-line px-4 py-2 font-body text-xs font-500 text-secondary transition-colors hover:bg-card"
+                >
+                  <ImageIcon size={14} />
+                  Browse Existing Images
+                </button>
+              </div>
             ) : (
               <div className="relative inline-block">
                 <img
@@ -541,6 +558,18 @@ export default function PortfolioPage() {
           </AdminCard>
         )}
       </div>
+
+      {/* ── Media Pickers ── */}
+      <MediaPicker
+        open={showPhotoPicker}
+        onClose={() => setShowPhotoPicker(false)}
+        onSelect={(url) => {
+          setPhotoForm((prev) => ({ ...prev, preview: url, file: null, _libraryUrl: url }));
+          setShowPhotoPicker(false);
+        }}
+        type="image"
+        title="Choose Portfolio Photo"
+      />
     </div>
   );
 }

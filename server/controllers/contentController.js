@@ -25,7 +25,8 @@ exports.updateContent = async (req, res, next) => {
     const updateFields = [
       'heroKicker', 'heroTitle', 'heroSubtitle',
       'aboutTitle', 'aboutBody',
-      'whatsapp', 'email', 'instagram'
+      'whatsapp', 'email', 'instagram',
+      'heroImage', 'aboutImages'
     ];
 
     const update = {};
