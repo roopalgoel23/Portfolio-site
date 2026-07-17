@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { Upload, Trash2, Play, ImageIcon, Video, X, Loader2, Link2 } from 'lucide-react';
+import { Upload, Trash2, Play, ImageIcon, Video, X, Loader2, Link2, Plus } from 'lucide-react';
 import api, { assetUrl } from '../../api/axios';
 import {
   FieldLabel,
@@ -14,6 +14,7 @@ import {
 import { useConfirm } from '../components/ConfirmModal';
 
 const CATEGORIES = ['bridal', 'engagement', 'mehendi', 'party', 'editorial', 'pre-wedding'];
+const CUSTOM_VALUE = '__custom__';
 
 const TABS = [
   { key: 'photo', label: 'Photo', icon: ImageIcon },
@@ -45,6 +46,8 @@ export default function PortfolioPage() {
   });
   const [addingVideo, setAddingVideo] = useState(false);
   const [videoMode, setVideoMode] = useState('upload'); // 'upload' or 'url'
+  const [customCat, setCustomCat] = useState(''); // custom category text for photos
+  const [customCatVideo, setCustomCatVideo] = useState(''); // custom category text for videos
 
   // ── Fetch ──
   const fetchItems = useCallback(async () => {
@@ -89,9 +92,12 @@ export default function PortfolioPage() {
 
       const src = uploadData.path;
 
+      const resolvedCat = photoForm.category === CUSTOM_VALUE ? customCat.trim().toLowerCase() : photoForm.category;
+      if (!resolvedCat) { toast.error('Please enter a category name'); return; }
+
       const { data } = await api.post('/api/portfolio', {
         type: 'photo',
-        category: photoForm.category,
+        category: resolvedCat,
         src,
         caption: photoForm.caption,
         order: items.length
@@ -99,6 +105,7 @@ export default function PortfolioPage() {
 
       setItems([...items, data]);
       setPhotoForm({ file: null, preview: '', category: 'bridal', caption: '' });
+      setCustomCat('');
       toast.success('Photo added to portfolio!');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to upload photo');
@@ -133,9 +140,12 @@ export default function PortfolioPage() {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
 
+        const resolvedCat = videoForm.category === CUSTOM_VALUE ? customCatVideo.trim().toLowerCase() : videoForm.category;
+        if (!resolvedCat) { toast.error('Please enter a category name'); return; }
+
         const { data } = await api.post('/api/portfolio', {
           type: 'video',
-          category: videoForm.category,
+          category: resolvedCat,
           src: uploadData.path,
           videoUrl: uploadData.path,
           caption: videoForm.caption,
@@ -143,6 +153,7 @@ export default function PortfolioPage() {
         });
         setItems([...items, data]);
         setVideoForm({ file: null, preview: '', videoUrl: '', category: 'bridal', caption: '' });
+        setCustomCatVideo('');
         toast.success('Video added to portfolio!');
       } catch (err) {
         toast.error(err.response?.data?.message || 'Failed to upload video');
@@ -156,15 +167,19 @@ export default function PortfolioPage() {
       }
       setAddingVideo(true);
       try {
+        const resolvedCat = videoForm.category === CUSTOM_VALUE ? customCatVideo.trim().toLowerCase() : videoForm.category;
+        if (!resolvedCat) { toast.error('Please enter a category name'); return; }
+
         const { data } = await api.post('/api/portfolio', {
           type: 'video',
-          category: videoForm.category,
+          category: resolvedCat,
           videoUrl: videoForm.videoUrl,
           caption: videoForm.caption,
           order: items.length
         });
         setItems([...items, data]);
         setVideoForm({ file: null, preview: '', videoUrl: '', category: 'bridal', caption: '' });
+        setCustomCatVideo('');
         toast.success('Video added to portfolio!');
       } catch (err) {
         toast.error(err.response?.data?.message || 'Failed to add video');
@@ -272,14 +287,26 @@ export default function PortfolioPage() {
               <FieldLabel>Category</FieldLabel>
               <AdminSelect
                 value={photoForm.category}
-                onChange={(e) => setPhotoForm({ ...photoForm, category: e.target.value })}
+                onChange={(e) => {
+                  setPhotoForm({ ...photoForm, category: e.target.value });
+                  setCustomCat('');
+                }}
               >
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>
                     {c.charAt(0).toUpperCase() + c.slice(1)}
                   </option>
                 ))}
+                <option value={CUSTOM_VALUE}>+ Custom Category</option>
               </AdminSelect>
+              {photoForm.category === CUSTOM_VALUE && (
+                <AdminInput
+                  value={customCat}
+                  onChange={(e) => setCustomCat(e.target.value)}
+                  placeholder="Enter category name…"
+                  className="mt-2"
+                />
+              )}
             </div>
             <div>
               <FieldLabel>Caption</FieldLabel>
@@ -400,14 +427,26 @@ export default function PortfolioPage() {
               <FieldLabel>Category</FieldLabel>
               <AdminSelect
                 value={videoForm.category}
-                onChange={(e) => setVideoForm({ ...videoForm, category: e.target.value })}
+                onChange={(e) => {
+                  setVideoForm({ ...videoForm, category: e.target.value });
+                  setCustomCatVideo('');
+                }}
               >
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>
                     {c.charAt(0).toUpperCase() + c.slice(1)}
                   </option>
                 ))}
+                <option value={CUSTOM_VALUE}>+ Custom Category</option>
               </AdminSelect>
+              {videoForm.category === CUSTOM_VALUE && (
+                <AdminInput
+                  value={customCatVideo}
+                  onChange={(e) => setCustomCatVideo(e.target.value)}
+                  placeholder="Enter category name…"
+                  className="mt-2"
+                />
+              )}
             </div>
             <div>
               <FieldLabel>Caption</FieldLabel>

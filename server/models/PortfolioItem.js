@@ -9,7 +9,6 @@ const portfolioItemSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ['bridal', 'engagement', 'mehendi', 'party', 'editorial', 'pre-wedding'],
       required: true
     },
     src:      { type: String, default: '' },

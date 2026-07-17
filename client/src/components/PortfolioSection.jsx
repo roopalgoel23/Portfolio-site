@@ -19,6 +19,22 @@ const FALLBACK_PORTFOLIO = [
   { type:'photo', category:'party',      caption:'Festive soirée look',       src:'https://images.unsplash.com/photo-1456926631375-92c8ce872def?auto=format&fit=crop&w=800&q=80' }
 ];
 
+// Build dynamic tab list: 'All' + preset categories (that exist in data) + any custom categories
+function buildCategoryTabs(allItems) {
+  const presetSet = new Set(CATEGORIES.slice(1).map((c) => c.toLowerCase()));
+  const dataCats = new Set(allItems.map((i) => (i.category || '').toLowerCase()).filter(Boolean));
+  const tabs = ['All'];
+  // Preset tabs
+  CATEGORIES.slice(1).forEach((c) => { if (dataCats.has(c.toLowerCase())) tabs.push(c); });
+  // Custom tabs from data not covered by presets
+  dataCats.forEach((cat) => {
+    if (!presetSet.has(cat)) {
+      tabs.push(cat.charAt(0).toUpperCase() + cat.slice(1));
+    }
+  });
+  return tabs;
+}
+
 export default function PortfolioSection() {
   const [activeTab, setActiveTab] = useState('All');
   const [lightbox, setLightbox]   = useState(null); // {type, src}
@@ -78,7 +94,7 @@ export default function PortfolioSection() {
 
         {/* Filter tabs */}
         <div className="reveal mb-10 flex flex-wrap justify-center gap-3">
-          {CATEGORIES.map((cat) => (
+          {buildCategoryTabs(allItems).map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveTab(cat)}

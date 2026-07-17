@@ -14,6 +14,7 @@ import {
 import { useConfirm } from '../components/ConfirmModal';
 
 const OCCASIONS = ['Wedding', 'Engagement', 'Reception', 'Mehendi', 'Party', 'Editorial Shoot', 'Pre-Wedding', 'Other'];
+const CUSTOM_VALUE = '__custom__';
 
 export default function BridesPage() {
   const { confirm } = useConfirm();
@@ -22,6 +23,7 @@ export default function BridesPage() {
   const [editingBride, setEditingBride] = useState(null);
 
   const [form, setForm] = useState({ file: null, preview: '', name: '', occasion: 'Wedding' });
+  const [customOccasion, setCustomOccasion] = useState('');
   const [adding, setAdding] = useState(false);
 
   const fetchBrides = useCallback(async () => {
@@ -55,9 +57,12 @@ export default function BridesPage() {
       });
       const imagePath = uploadData.path;
 
+      const resolvedOccasion = form.occasion === CUSTOM_VALUE ? customOccasion.trim() : form.occasion;
+      if (!resolvedOccasion) { toast.error('Please enter an occasion'); return; }
+
       const { data } = await api.post('/api/brides', {
         name: form.name,
-        occasion: form.occasion,
+        occasion: resolvedOccasion,
         image: imagePath,
         gallery: [{ type: 'image', src: imagePath }],
         order: brides.length
@@ -72,6 +77,7 @@ export default function BridesPage() {
 
       fetchBrides();
       setForm({ file: null, preview: '', name: '', occasion: 'Wedding' });
+      setCustomOccasion('');
       toast.success('Bride added!');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to add bride');
@@ -165,9 +171,18 @@ export default function BridesPage() {
           </div>
           <div>
             <FieldLabel>Occasion</FieldLabel>
-            <AdminSelect value={form.occasion} onChange={(e) => setForm({ ...form, occasion: e.target.value })}>
+            <AdminSelect value={form.occasion} onChange={(e) => { setForm({ ...form, occasion: e.target.value }); setCustomOccasion(''); }}>
               {OCCASIONS.map((o) => (<option key={o} value={o}>{o}</option>))}
+              <option value={CUSTOM_VALUE}>+ Custom Occasion</option>
             </AdminSelect>
+            {form.occasion === CUSTOM_VALUE && (
+              <AdminInput
+                value={customOccasion}
+                onChange={(e) => setCustomOccasion(e.target.value)}
+                placeholder="Enter occasion name…"
+                className="mt-2"
+              />
+            )}
           </div>
         </div>
         <div className="mt-6">
