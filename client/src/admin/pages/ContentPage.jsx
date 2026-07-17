@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { Save, Loader2, Upload, X, ImagePlus } from 'lucide-react';
+import { Save, Loader2, Upload, X, ImagePlus, Trash2 } from 'lucide-react';
 import api, { assetUrl } from '../../api/axios';
 import {
   FieldLabel,
@@ -101,12 +101,26 @@ export default function ContentPage() {
     }
   };
 
-  // ── Remove about image (client-side; no delete endpoint, so clear via save) ──
-  const removeAboutImage = (index) => {
-    const updated = content.aboutImages.filter((_, i) => i !== index);
-    updateField('aboutImages', updated);
-    // Note: aboutImages are stored separately in DB; we update locally for preview
-    toast('Image removed from preview. Save content to persist.', { icon: 'ℹ️' });
+  // ── Remove about image (persists to DB + Cloudinary) ──
+  const removeAboutImage = async (index) => {
+    try {
+      const { data } = await api.delete(`/api/content/about-images/${index}`);
+      updateField('aboutImages', data.aboutImages);
+      toast.success('Image removed');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to remove image');
+    }
+  };
+
+  // ── Remove hero image ──
+  const removeHeroImage = async () => {
+    try {
+      const { data } = await api.delete('/api/content/hero-image');
+      updateField('heroImage', data.heroImage);
+      toast.success('Hero image removed');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to remove hero image');
+    }
   };
 
   if (loading) {
@@ -251,12 +265,18 @@ export default function ContentPage() {
           <FieldLabel>Hero Image</FieldLabel>
           <div className="flex flex-wrap items-center gap-6">
             {content.heroImage && (
-              <div className="relative">
+              <div className="group relative">
                 <img
                   src={assetUrl(content.heroImage)}
                   alt="Hero"
                   className="h-32 w-24 rounded-btn border border-line object-cover"
                 />
+                <button
+                  onClick={removeHeroImage}
+                  className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                >
+                  <X size={14} />
+                </button>
               </div>
             )}
             <label

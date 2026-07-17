@@ -85,6 +85,68 @@ exports.uploadHeroImage = async (req, res, next) => {
 };
 
 /**
+ * DELETE /api/content/about-images/:index  (admin)
+ * Remove a single about image by index (also deletes from Cloudinary).
+ */
+exports.deleteAboutImage = async (req, res, next) => {
+  try {
+    const { index } = req.params;
+    const idx = parseInt(index, 10);
+
+    let content = await SiteContent.findOne();
+    if (!content) {
+      return res.status(404).json({ message: 'Content not found.' });
+    }
+    if (isNaN(idx) || idx < 0 || idx >= content.aboutImages.length) {
+      return res.status(400).json({ message: 'Invalid image index.' });
+    }
+
+    const imageUrl = content.aboutImages[idx];
+
+    // Delete from Cloudinary if it's a Cloudinary URL
+    if (imageUrl && imageUrl.includes('cloudinary')) {
+      try {
+        const oldPublicId = imageUrl.split('/').slice(-2).join('/').split('.')[0];
+        if (oldPublicId) await deleteFromCloudinary(oldPublicId, 'image');
+      } catch (_) { /* best-effort cleanup */ }
+    }
+
+    content.aboutImages.splice(idx, 1);
+    await content.save();
+    res.json({ message: 'About image removed', aboutImages: content.aboutImages });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * DELETE /api/content/hero-image  (admin)
+ * Remove the hero image (also deletes from Cloudinary).
+ */
+exports.deleteHeroImage = async (req, res, next) => {
+  try {
+    let content = await SiteContent.findOne();
+    if (!content) {
+      return res.status(404).json({ message: 'Content not found.' });
+    }
+
+    // Delete from Cloudinary if it's a Cloudinary URL
+    if (content.heroImage && content.heroImage.includes('cloudinary')) {
+      try {
+        const oldPublicId = content.heroImage.split('/').slice(-2).join('/').split('.')[0];
+        if (oldPublicId) await deleteFromCloudinary(oldPublicId, 'image');
+      } catch (_) { /* best-effort cleanup */ }
+    }
+
+    content.heroImage = '';
+    await content.save();
+    res.json({ message: 'Hero image removed', heroImage: '' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
  * POST /api/content/about-images  (admin)  – multer array max 3
  */
 exports.uploadAboutImages = async (req, res, next) => {

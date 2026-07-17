@@ -11,7 +11,9 @@ router.get('/content', contentController.getContent);
 // Admin
 router.put('/content', requireAuth, contentController.updateContent);
 router.post('/content/hero-image',  requireAuth, uploadSingleImage,    contentController.uploadHeroImage);
+router.delete('/content/hero-image', requireAuth, contentController.deleteHeroImage);
 router.post('/content/about-images', requireAuth, uploadMultipleImages, contentController.uploadAboutImages);
+router.delete('/content/about-images/:index', requireAuth, contentController.deleteAboutImage);
 
 // Generic file upload — uploads to Cloudinary and returns { path, publicId, bytes, resourceType }
 router.post('/upload', requireAuth, uploadSingleFile, checkCloudinaryLimits, async (req, res, next) => {
