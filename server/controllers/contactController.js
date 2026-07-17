@@ -1,5 +1,7 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const Enquiry = require('../models/Enquiry');
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 /**
  * POST /api/contact
@@ -19,31 +21,16 @@ exports.sendContact = async (req, res, next) => {
     // ── 1. Save to database (primary, always works) ──
     await Enquiry.create({ name, email, phone, message, eventDate });
 
-    // ── 2. Try email notification (best-effort, never blocks the response) ──
-    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    // ── 2. Try email notification via Resend (best-effort, never blocks the response) ──
+    if (process.env.RESEND_API_KEY) {
       try {
-        const transporter = nodemailer.createTransport({
-          host:   process.env.SMTP_HOST,
-          port:   Number(process.env.SMTP_PORT) || 587,
-          secure: (Number(process.env.SMTP_PORT) || 587) === 465,
-          connectionTimeout: 5000,
-          greetingTimeout:   5000,
-          socketTimeout:     5000,
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS
-          }
-        });
+        const fromDomain = process.env.RESEND_FROM_DOMAIN || 'makeupbyroopalgoel.com';
+        const toEmail = process.env.CONTACT_TO_EMAIL || 'Makeupbyroopalgoel@gmail.com';
 
-        const smtpUser = process.env.SMTP_USER;
-        const fromName = process.env.CONTACT_FROM_NAME || 'Portfolio Enquiry';
-        const fromEmail = process.env.CONTACT_FROM_EMAIL || smtpUser;
-        const toEmail   = process.env.CONTACT_TO_EMAIL   || smtpUser;
-
-        await transporter.sendMail({
-          from:    `"${fromName}" <${fromEmail}>`,
-          to:      toEmail,
-          replyTo: `"${name}" <${email}>`,
+        await resend.emails.send({
+          from: `Portfolio Enquiry <enquiries@${fromDomain}>`,
+          to: toEmail,
+          replyTo: `${name} <${email}>`,
           subject: `New enquiry from ${name}`,
           html: `
             <div style="font-family: Georgia, 'Times New Roman', serif; max-width: 600px; margin: 0 auto; padding: 0;">
@@ -63,8 +50,8 @@ exports.sendContact = async (req, res, next) => {
           `
         });
       } catch (emailErr) {
-        // Email failed (e.g. Railway blocks SMTP ports) — enquiry is already saved in DB
-        console.log('Email notification skipped:', emailErr.code || emailErr.message);
+        // Email failed — enquiry is already saved in DB
+        console.log('Email notification skipped:', emailErr.message);
       }
     }
 
