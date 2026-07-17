@@ -72,6 +72,11 @@ app.use('/api/', apiLimiter);
 /* ── Static: uploaded files ──────────────────────────── */
 app.use('/uploads', express.static(uploadsDir));
 
+/* ── Health check (before API routes so it's always public) ── */
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 /* ── API Routes ──────────────────────────────────────── */
 app.use('/api', contentRoutes);
 app.use('/api', serviceRoutes);
@@ -94,11 +99,7 @@ if (process.env.NODE_ENV === 'production') {
   }
 }
 
-/* ── Health check ────────────────────────────────────── */
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
+/* ── Root route ───────────────────────────────────────── */
 app.get('/', (_req, res) => {
   res.json({ status: 'ok', service: 'makeup-by-roopal-goel' });
 });
