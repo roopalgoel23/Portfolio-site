@@ -24,11 +24,11 @@ exports.sendContact = async (req, res, next) => {
     // ── 2. Try email notification via Resend (best-effort, never blocks the response) ──
     if (process.env.RESEND_API_KEY) {
       try {
-        const fromDomain = process.env.RESEND_FROM_DOMAIN || 'makeupbyroopalgoel.com';
+        const fromEmail = process.env.RESEND_FROM_EMAIL || 'portfolio@makeupbyroopalgoel.com';
         const toEmail = process.env.CONTACT_TO_EMAIL || 'Makeupbyroopalgoel@gmail.com';
 
         await resend.emails.send({
-          from: `Portfolio Enquiry <enquiries@${fromDomain}>`,
+          from: `Portfolio Enquiry <${fromEmail}>`,
           to: toEmail,
           replyTo: `${name} <${email}>`,
           subject: `New enquiry from ${name}`,
