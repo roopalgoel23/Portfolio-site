@@ -5,7 +5,7 @@ import useFetch from '../hooks/useFetch';
 import Skeleton from './Skeleton';
 import SectionSkeleton from './SectionSkeleton';
 
-const CATEGORIES = ['All', 'Bridal', 'Engagement', 'Mehendi', 'Party'];
+const CATEGORIES = ['All', 'Bridal', 'Engagement', 'Mehendi', 'Party', 'Editorial', 'Pre-Wedding'];
 
 const FALLBACK_PORTFOLIO = [
   { type:'photo', category:'bridal',     caption:'Traditional bridal look',   src:'https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=800&q=80' },

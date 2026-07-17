@@ -13,7 +13,7 @@ import {
 } from '../components/AdminUI';
 import { useConfirm } from '../components/ConfirmModal';
 
-const CATEGORIES = ['bridal', 'engagement', 'mehendi', 'party'];
+const CATEGORIES = ['bridal', 'engagement', 'mehendi', 'party', 'editorial', 'pre-wedding'];
 
 const TABS = [
   { key: 'photo', label: 'Photo', icon: ImageIcon },

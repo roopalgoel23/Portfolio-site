@@ -13,6 +13,11 @@ const featuredBrideSchema = new mongoose.Schema(
   {
     name:       { type: String, required: true, trim: true },
     occasion:   { type: String, default: '', trim: true },
+    category:   {
+      type: String,
+      enum: ['bridal', 'engagement', 'mehendi', 'party', 'editorial', 'pre-wedding'],
+      default: 'bridal'
+    },
     image:      { type: String, default: '' },
     gallery:    { type: [mediaItemSchema], default: [] },
     thumbnailId:{ type: mongoose.Schema.Types.ObjectId, default: null },

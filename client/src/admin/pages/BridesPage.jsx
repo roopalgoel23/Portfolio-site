@@ -13,7 +13,7 @@ import {
 } from '../components/AdminUI';
 import { useConfirm } from '../components/ConfirmModal';
 
-const OCCASIONS = ['Wedding', 'Engagement', 'Reception', 'Mehendi', 'Party', 'Other'];
+const OCCASIONS = ['Wedding', 'Engagement', 'Reception', 'Mehendi', 'Party', 'Editorial Shoot', 'Pre-Wedding', 'Other'];
 
 export default function BridesPage() {
   const { confirm } = useConfirm();
