@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { Upload, Trash2, Play, ImageIcon, Video, X, Loader2, Link2, Plus } from 'lucide-react';
+import { Upload, Trash2, Play, ImageIcon, Video, X, Loader2, Link2, Plus, ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
 import api, { assetUrl } from '../../api/axios';
 import {
   FieldLabel,
@@ -209,6 +209,61 @@ export default function PortfolioPage() {
       toast.success('Item deleted');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to delete');
+    }
+  };
+
+  // ── Reorder (arrow buttons) ──
+  const handleReorder = async (index, dir) => {
+    const newIndex = index + dir;
+    if (newIndex < 0 || newIndex >= items.length) return;
+    const reordered = [...items];
+    [reordered[index], reordered[newIndex]] = [reordered[newIndex], reordered[index]];
+    const updated = reordered.map((item, i) => ({ ...item, order: i }));
+    setItems(updated);
+    try {
+      await api.post('/api/portfolio/reorder', {
+        order: updated.map((item) => ({ id: item._id, order: item.order }))
+      });
+    } catch {
+      toast.error('Failed to update order');
+      fetchItems();
+    }
+  };
+
+  // ── Drag and drop reorder ──
+  const [dragIndex, setDragIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+
+  const handleDragStart = (index) => {
+    setDragIndex(index);
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    setDragOverIndex(index);
+  };
+
+  const handleDrop = async (index) => {
+    if (dragIndex === null || dragIndex === index) {
+      setDragIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+    const reordered = [...items];
+    const [moved] = reordered.splice(dragIndex, 1);
+    reordered.splice(index, 0, moved);
+    const updated = reordered.map((item, i) => ({ ...item, order: i }));
+    setItems(updated);
+    setDragIndex(null);
+    setDragOverIndex(null);
+    try {
+      await api.post('/api/portfolio/reorder', {
+        order: updated.map((item) => ({ id: item._id, order: item.order }))
+      });
+      toast.success('Order updated');
+    } catch {
+      toast.error('Failed to update order');
+      fetchItems();
     }
   };
 
@@ -494,14 +549,33 @@ export default function PortfolioPage() {
 
       {/* ── Existing items grid ── */}
       <div>
-        <h3 className="mb-4 font-heading text-lg font-600 text-primary">
-          Gallery Items ({items.length})
-        </h3>
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="font-heading text-lg font-600 text-primary">
+            Gallery Items ({items.length})
+          </h3>
+          {items.length > 1 && (
+            <p className="font-body text-xs text-secondary">
+              <GripVertical size={12} className="mb-0.5 inline" />
+              Drag to reorder or use arrows
+            </p>
+          )}
+        </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {items.map((item) => (
+          {items.map((item, index) => (
             <div
               key={item._id}
-              className="group relative overflow-hidden rounded-card border border-line bg-card"
+              draggable
+              onDragStart={() => handleDragStart(index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDrop={() => handleDrop(index)}
+              onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+              className={`group relative overflow-hidden rounded-card border bg-card transition-all duration-200 ${
+                dragOverIndex === index && dragIndex !== null && dragIndex !== index
+                  ? 'border-accentHover ring-2 ring-accentHover scale-[1.02]'
+                  : dragIndex === index
+                    ? 'border-line opacity-40'
+                    : 'border-line'
+              }`}
             >
               {/* Image / Video thumbnail */}
               <div className="relative aspect-square">
@@ -539,13 +613,36 @@ export default function PortfolioPage() {
                 </div>
               )}
 
-              {/* Delete on hover */}
-              <button
-                onClick={() => handleDelete(item._id)}
-                className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-              >
-                <Trash2 size={14} />
-              </button>
+              {/* Hover controls */}
+              <div className="absolute right-2 top-2 flex items-center gap-1.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                {/* Drag handle */}
+                <div className="flex h-7 w-7 cursor-grab items-center justify-center rounded-full bg-white/80 text-secondary active:cursor-grabbing">
+                  <GripVertical size={14} />
+                </div>
+                {/* Move up */}
+                <button
+                  onClick={() => handleReorder(index, -1)}
+                  disabled={index === 0}
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-primary transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  <ChevronUp size={14} />
+                </button>
+                {/* Move down */}
+                <button
+                  onClick={() => handleReorder(index, 1)}
+                  disabled={index === items.length - 1}
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-primary transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  <ChevronDown size={14} />
+                </button>
+                {/* Delete */}
+                <button
+                  onClick={() => handleDelete(item._id)}
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white transition-colors hover:bg-red-500"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
