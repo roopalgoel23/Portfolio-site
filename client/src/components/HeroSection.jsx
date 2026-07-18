@@ -34,14 +34,14 @@ export default function HeroSection() {
           ) : (
             <>
               <p className="font-body text-sm font-500 tracking-[0.2em] text-secondary uppercase">
-                {content?.heroKicker || 'Bridal Makeup Artist'}
+                {content?.heroKicker || 'Bridal Makeup Artist in Delhi'}
               </p>
               <h1 className="mt-4 font-heading text-[2.5rem] font-600 leading-[1.1] text-primary sm:text-[3.5rem] lg:text-[4.5rem]">
-                {content?.heroTitle || 'Makeup by Roopal Goel'}
+                {content?.heroTitle || 'Roopal Goel — Luxury Bridal Makeup Artist'}
               </h1>
               <p className="mt-6 max-w-lg font-body text-lg text-secondary">
                 {content?.heroSubtitle ||
-                  'Enhancing your natural beauty on your most special day.'}
+                  'Top-rated bridal makeup artist in Delhi — enhancing your natural beauty for weddings, engagements, mehendi & parties.'}
               </p>
               <div className="mt-10 flex flex-wrap gap-4">
                 <a

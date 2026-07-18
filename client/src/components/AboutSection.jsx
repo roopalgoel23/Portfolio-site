@@ -122,11 +122,11 @@ export default function AboutSection() {
                 About
               </p>
               <h2 className="mt-4 font-heading text-4xl font-600 text-primary sm:text-5xl">
-                {content?.aboutTitle || 'About Roopal'}
+                {content?.aboutTitle || 'About Roopal Goel — Makeup Artist in Delhi'}
               </h2>
               <p className="mt-6 font-body text-lg leading-[1.8] text-secondary">
                 {content?.aboutBody ||
-                  'Roopal Goel is a professional bridal makeup artist dedicated to creating flawless, long-lasting looks for brides and special occasions.'}
+                  'Roopal Goel is a professional bridal makeup artist in Delhi dedicated to creating flawless, long-lasting looks for brides, weddings, engagements, mehendi and special occasions. Using premium HD products, Roopal enhances your natural beauty for your most memorable day.'}
               </p>
 
               <a
