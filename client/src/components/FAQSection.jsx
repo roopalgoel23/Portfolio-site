@@ -1,29 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Plus, Minus } from 'lucide-react';
 import api from '../api/axios';
 import useFetch from '../hooks/useFetch';
 import Skeleton from './Skeleton';
 
-// Inject FAQ structured data so Google can show rich snippets in search results
-const FAQ_SCHEMA_ID = 'faq-schema-dynamic';
-function injectFAQSchema(faqs) {
-  const existing = document.getElementById(FAQ_SCHEMA_ID);
-  if (existing) existing.remove();
-  if (!faqs || !faqs.length) return;
-  const script = document.createElement('script');
-  script.type = 'application/ld+json';
-  script.id = FAQ_SCHEMA_ID;
-  script.textContent = JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqs.map((f) => ({
-      '@type': 'Question',
-      name: f.question,
-      acceptedAnswer: { '@type': 'Answer', text: f.answer }
-    }))
-  });
-  document.head.appendChild(script);
-}
+// NOTE: FAQ structured data (JSON-LD) lives statically in index.html.
+// Do NOT inject it here dynamically — it creates a duplicate and triggers
+// Google warnings. If you edit these FAQs, also update index.html.
 
 const FALLBACK_FAQS = [
   {
@@ -98,15 +81,6 @@ export default function FAQSection() {
   );
 
   const items = faqs && faqs.length ? faqs : FALLBACK_FAQS;
-
-  // Keep Google's FAQ rich-snippet in sync with whatever is displayed
-  useEffect(() => {
-    injectFAQSchema(items);
-    return () => {
-      const el = document.getElementById(FAQ_SCHEMA_ID);
-      if (el) el.remove();
-    };
-  }, [items]);
 
   if (error) return null;
 
