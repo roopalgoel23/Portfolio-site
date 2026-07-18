@@ -12,7 +12,6 @@ Disallow: /admin/
 Allow: /Logo2.png
 Allow: /Logo.png
 Allow: /apple-touch-icon.png
-Allow: /favicon.svg
 Allow: /sitemap.xml
 Allow: /robots.txt
 
