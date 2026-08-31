@@ -5,8 +5,9 @@ const storageController = require('../controllers/storageController');
 const { requireAuth }   = require('../middleware/auth');
 const { uploadSingleFile, checkCloudinaryLimits } = require('../middleware/upload');
 
-// All storage routes require admin auth
-router.use(requireAuth);
+// All storage routes require admin auth (scoped: a bare router.use here
+// would also guard /api/health and every other unmatched /api path)
+router.use('/storage', requireAuth);
 
 // Storage usage stats
 router.get('/storage/usage', storageController.getUsage);
