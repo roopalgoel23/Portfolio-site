@@ -22,6 +22,9 @@ const storageRoutes       = require('./routes/storageRoutes');
 const app  = express();
 const PORT = process.env.PORT || 5000;
 
+// Behind Render's proxy: needed for express-rate-limit to see real client IPs
+app.set('trust proxy', 1);
+
 /* ── MongoDB ─────────────────────────────────────────── */
 mongoose
   .connect(process.env.MONGODB_URI)
@@ -134,6 +137,6 @@ app.use((err, _req, res, _next) => {
 });
 
 /* ── Start ───────────────────────────────────────────── */
-app.listen(PORT, () => {
-  console.log(`🚀  Server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀  Server running on port ${PORT}`);
 });
