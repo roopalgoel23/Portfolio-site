@@ -1,0 +1,21 @@
+const express = require('express');
+const app = express();
+app.use('/api', require('./routes/storageRoutes'));
+app.get('/api/health', (_q, r) => r.json({ status: 'ok' }));
+app.use((q, r) => r.status(404).json({ message: 'not found' }));
+const s = app.listen(0, async () => {
+  const p = s.address().port;
+  const hit = async u => (await fetch('http://127.0.0.1:' + p + u, { headers: { connection: 'close' } })).status;
+  const health = await hit('/api/health');
+  const usage  = await hit('/api/storage/usage');
+  const res    = await hit('/api/storage/resources');
+  const bogus  = await hit('/api/nope');
+  console.log('health        ->', health, '(want 200)');
+  console.log('storage/usage ->', usage,  '(want 401)');
+  console.log('storage/res   ->', res,    '(want 401)');
+  console.log('unmatched     ->', bogus,  '(want 404)');
+  const pass = health === 200 && usage === 401 && res === 401 && bogus === 404;
+  console.log(pass ? 'ALL PASS' : 'FAIL');
+  process.exitCode = pass ? 0 : 1;
+  s.close();
+});
