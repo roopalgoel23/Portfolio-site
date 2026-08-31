@@ -139,8 +139,4 @@ app.use((err, _req, res, _next) => {
 /* ── Start ───────────────────────────────────────────── */
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀  Server running on port ${PORT}`);
-  // ponytail: temporary self-probe — deploy log is the only window on free tier; remove once green
-  fetch(`http://127.0.0.1:${PORT}/api/health`)
-    .then(r => r.text().then(b => console.log(`SELFCHECK status=${r.status} body=${b}`)))
-    .catch(e => console.log(`SELFCHECK FAILED ${e.message}`));
 });
