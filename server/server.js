@@ -22,8 +22,9 @@ const storageRoutes       = require('./routes/storageRoutes');
 const app  = express();
 const PORT = process.env.PORT || 5000;
 
-// Behind Render's proxy: needed for express-rate-limit to see real client IPs
-app.set('trust proxy', 1);
+// 2 hops in front of the app: Vercel's rewrite proxy, then Render's own LB.
+// Needed for express-rate-limit to see the real client IP instead of Vercel's edge IP.
+app.set('trust proxy', 2);
 
 /* ── MongoDB ─────────────────────────────────────────── */
 mongoose
@@ -62,12 +63,14 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // NoSQL injection prevention — strips $ and . from req.body/params/query
 app.use(mongoSanitize());
 
-// Global rate limiter — 100 requests per 15 min per IP
+// Global rate limiter — 500 requests per 15 min per IP (a single page load
+// fires ~6-7 API calls, so this needs headroom for normal browsing)
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: 500,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.path === '/health',
   message: { message: 'Too many requests. Please try again later.' }
 });
 app.use('/api/', apiLimiter);
