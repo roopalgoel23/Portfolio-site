@@ -1,7 +1,13 @@
 const { Resend } = require('resend');
 const Enquiry = require('../models/Enquiry');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Constructed lazily (only when a key exists) -- the Resend SDK throws
+// immediately if given an empty key, which would crash the whole server
+// on startup instead of just skipping the best-effort email step below.
+let resend = null;
+if (process.env.RESEND_API_KEY) {
+  resend = new Resend(process.env.RESEND_API_KEY);
+}
 
 /**
  * POST /api/contact
