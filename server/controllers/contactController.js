@@ -1,12 +1,25 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 const Enquiry = require('../models/Enquiry');
 
-// Constructed lazily (only when a key exists) -- the Resend SDK throws
-// immediately if given an empty key, which would crash the whole server
-// on startup instead of just skipping the best-effort email step below.
-let resend = null;
-if (process.env.RESEND_API_KEY) {
-  resend = new Resend(process.env.RESEND_API_KEY);
+// Constructed lazily (only when creds exist) so a missing/incomplete SMTP
+// setup can't crash the server -- it just skips the best-effort email step.
+// Short timeouts: if the host blocks outbound SMTP, this fails in ~8s
+// instead of hanging for minutes (Nodemailer's default is 2 minutes).
+let transporter = null;
+if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+  const port = Number(process.env.SMTP_PORT) || 587;
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port,
+    secure: port === 465,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    },
+    connectionTimeout: 8000,
+    greetingTimeout: 8000,
+    socketTimeout: 8000
+  });
 }
 
 /**
@@ -27,16 +40,17 @@ exports.sendContact = async (req, res, next) => {
     // ── 1. Save to database (primary, always works) ──
     await Enquiry.create({ name, email, phone, message, eventDate });
 
-    // ── 2. Try email notification via Resend (best-effort, never blocks the response) ──
-    if (process.env.RESEND_API_KEY) {
+    // ── 2. Try email notification via Gmail SMTP (best-effort, never blocks the response) ──
+    if (transporter) {
       try {
-        const fromEmail = process.env.RESEND_FROM_EMAIL || 'portfolio@makeupbyroopalgoel.com';
-        const toEmail = process.env.CONTACT_TO_EMAIL || 'Makeupbyroopalgoel@gmail.com';
+        const fromName  = process.env.CONTACT_FROM_NAME  || 'Portfolio Enquiry';
+        const fromEmail = process.env.CONTACT_FROM_EMAIL || process.env.SMTP_USER;
+        const toEmail   = process.env.CONTACT_TO_EMAIL   || process.env.SMTP_USER;
 
-        await resend.emails.send({
-          from: `Portfolio Enquiry <${fromEmail}>`,
+        await transporter.sendMail({
+          from: `"${fromName}" <${fromEmail}>`,
           to: toEmail,
-          replyTo: `${name} <${email}>`,
+          replyTo: `"${name}" <${email}>`,
           subject: `New enquiry from ${name}`,
           html: `
             <div style="font-family: Georgia, 'Times New Roman', serif; max-width: 600px; margin: 0 auto; padding: 0;">
