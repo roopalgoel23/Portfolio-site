@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: roopal-portfolio-api
+    name: makeup-by-roopal-goel-api
     runtime: node
     plan: free
     rootDir: server
