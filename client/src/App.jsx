@@ -29,6 +29,7 @@ const TestimonialsPage = React.lazy(() => import('./admin/pages/TestimonialsPage
 const FaqsPage       = React.lazy(() => import('./admin/pages/FaqsPage'));
 const StoragePage     = React.lazy(() => import('./admin/pages/StoragePage'));
 const CompressionPage = React.lazy(() => import('./admin/pages/CompressionPage'));
+const EnquiriesPage    = React.lazy(() => import('./admin/pages/EnquiriesPage'));
 
 function PublicSite() {
   useScrollReveal();
@@ -100,6 +101,7 @@ export default function App() {
             <Route path="faqs"         element={<React.Suspense fallback={<AdminLoading />}><FaqsPage /></React.Suspense>} />
             <Route path="storage"      element={<React.Suspense fallback={<AdminLoading />}><StoragePage /></React.Suspense>} />
             <Route path="compress"     element={<React.Suspense fallback={<AdminLoading />}><CompressionPage /></React.Suspense>} />
+            <Route path="enquiries"    element={<React.Suspense fallback={<AdminLoading />}><EnquiriesPage /></React.Suspense>} />
           </Route>
 
         {/* Public — catch-all */}

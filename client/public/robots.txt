@@ -1,0 +1,31 @@
+# ─── robots.txt — Makeup by Roopal Goel ─────────────
+# Allow all search engines to crawl the entire site
+
+User-agent: *
+Allow: /
+
+# Block the admin area from being indexed
+Disallow: /admin
+Disallow: /admin/
+
+# Explicitly allow key assets (favicons, logos, sitemap)
+Allow: /Logo2.png
+Allow: /Logo.png
+Allow: /apple-touch-icon.png
+Allow: /sitemap.xml
+Allow: /robots.txt
+
+# ─── Search engine specific rules ───────────────────
+User-agent: Googlebot
+Allow: /
+Disallow: /admin
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin
+
+# ─── Crawl delay (be nice to servers) ───────────────
+Crawl-delay: 1
+
+# ─── Point bots to the sitemap ──────────────────────
+Sitemap: https://makeupbyroopalgoel.com/sitemap.xml

@@ -10,38 +10,15 @@ import useFetch from '../hooks/useFetch';
 import Skeleton from './Skeleton';
 import SectionSkeleton from './SectionSkeleton';
 
-const FALLBACK_TESTIMONIALS = [
-  {
-    clientName: 'Priya Sharma',
-    occasion:   'Wedding',
-    rating:     5,
-    review:
-      'Roopal made me feel like the most beautiful bride. The makeup lasted the entire day and looked amazing in every photo!'
-  },
-  {
-    clientName: 'Anjali Verma',
-    occasion:   'Engagement',
-    rating:     5,
-    review:
-      'Absolutely loved my engagement look. She understood exactly what I wanted and delivered beyond expectations.'
-  },
-  {
-    clientName: 'Neha Gupta',
-    occasion:   'Reception',
-    rating:     5,
-    review:
-      'Professional, punctual and incredibly talented. Highly recommend for any special occasion!'
-  }
-];
-
 export default function TestimonialsSection() {
   const { data: testimonials, loading, error } = useFetch(
     () => api.get('/api/testimonials').then((r) => r.data)
   );
 
-  const items = testimonials && testimonials.length ? testimonials : FALLBACK_TESTIMONIALS;
+  const items = testimonials && testimonials.length ? testimonials : [];
 
   if (error) return null;
+  if (!loading && items.length === 0) return null;
 
   return (
     <section id="testimonials" className="bg-base py-24">

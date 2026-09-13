@@ -1,8 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Plus, Minus } from 'lucide-react';
 import api from '../api/axios';
 import useFetch from '../hooks/useFetch';
 import Skeleton from './Skeleton';
+
+// NOTE: FAQ structured data (JSON-LD) lives statically in index.html.
+// Do NOT inject it here dynamically — it creates a duplicate and triggers
+// Google warnings. If you edit these FAQs, also update index.html.
 
 const FALLBACK_FAQS = [
   {

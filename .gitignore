@@ -34,4 +34,5 @@ Thumbs.db
 *.jpg
 *.png
 !client/public/Logo.png
-!client/public/favicon.svg
+!client/public/Logo2.png
+!client/public/apple-touch-icon.png

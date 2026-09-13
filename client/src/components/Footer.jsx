@@ -38,10 +38,10 @@ export default function Footer() {
               Roopal Goel
             </h3>
             <p className="mt-1 font-body text-sm tracking-[0.15em] text-secondary uppercase">
-              Bridal Makeup Artist
+              Bridal Makeup Artist in Delhi
             </p>
             <p className="mt-4 max-w-xs font-body text-base text-secondary">
-              Enhancing your natural beauty on your most special day.
+              Luxury bridal, wedding &amp; party makeup artist serving Delhi, Noida, Gurgaon and destination weddings.
             </p>
           </div>
 

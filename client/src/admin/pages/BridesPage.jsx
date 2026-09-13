@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { Upload, Trash2, ChevronUp, ChevronDown, X, Loader2, Star, Images, Video, Plus } from 'lucide-react';
+import { Upload, Trash2, ChevronUp, ChevronDown, X, Loader2, Star, Images, Video, Plus, ImageIcon } from 'lucide-react';
 import api, { assetUrl } from '../../api/axios';
 import {
   FieldLabel,
@@ -12,8 +12,10 @@ import {
   IconButton
 } from '../components/AdminUI';
 import { useConfirm } from '../components/ConfirmModal';
+import MediaPicker from '../components/MediaPicker';
 
-const OCCASIONS = ['Wedding', 'Engagement', 'Reception', 'Mehendi', 'Party', 'Other'];
+const OCCASIONS = ['Wedding', 'Engagement', 'Reception', 'Mehendi', 'Party', 'Editorial Shoot', 'Pre-Wedding', 'Other'];
+const CUSTOM_VALUE = '__custom__';
 
 export default function BridesPage() {
   const { confirm } = useConfirm();
@@ -22,7 +24,9 @@ export default function BridesPage() {
   const [editingBride, setEditingBride] = useState(null);
 
   const [form, setForm] = useState({ file: null, preview: '', name: '', occasion: 'Wedding' });
+  const [customOccasion, setCustomOccasion] = useState('');
   const [adding, setAdding] = useState(false);
+  const [showBridePicker, setShowBridePicker] = useState(false);
 
   const fetchBrides = useCallback(async () => {
     try {
@@ -45,19 +49,27 @@ export default function BridesPage() {
 
   const handleAdd = async () => {
     if (!form.name.trim()) { toast.error('Name is required'); return; }
-    if (!form.file) { toast.error('Please upload a photo'); return; }
+    if (!form.file && !form._libraryUrl) { toast.error('Please upload a photo or choose from library'); return; }
     setAdding(true);
     try {
-      const formData = new FormData();
-      formData.append('file', form.file);
-      const { data: uploadData } = await api.post('/api/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      const imagePath = uploadData.path;
+      let imagePath;
+      if (form._libraryUrl) {
+        imagePath = form._libraryUrl;
+      } else {
+        const formData = new FormData();
+        formData.append('file', form.file);
+        const { data: uploadData } = await api.post('/api/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        imagePath = uploadData.path;
+      }
+
+      const resolvedOccasion = form.occasion === CUSTOM_VALUE ? customOccasion.trim() : form.occasion;
+      if (!resolvedOccasion) { toast.error('Please enter an occasion'); return; }
 
       const { data } = await api.post('/api/brides', {
         name: form.name,
-        occasion: form.occasion,
+        occasion: resolvedOccasion,
         image: imagePath,
         gallery: [{ type: 'image', src: imagePath }],
         order: brides.length
@@ -71,7 +83,8 @@ export default function BridesPage() {
       }
 
       fetchBrides();
-      setForm({ file: null, preview: '', name: '', occasion: 'Wedding' });
+      setForm({ file: null, preview: '', name: '', occasion: 'Wedding', _libraryUrl: null });
+      setCustomOccasion('');
       toast.success('Bride added!');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to add bride');
@@ -142,11 +155,21 @@ export default function BridesPage() {
           <div>
             <FieldLabel>Photo</FieldLabel>
             {!form.preview ? (
-              <label className="flex h-32 w-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-btn border-2 border-dashed border-line transition-colors duration-300 hover:border-accentHover">
-                <Upload size={20} className="text-secondary" />
-                <span className="font-body text-xs text-secondary">Upload</span>
-                <input type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
-              </label>
+              <div className="flex flex-col items-center gap-2">
+                <label className="flex h-32 w-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-btn border-2 border-dashed border-line transition-colors duration-300 hover:border-accentHover">
+                  <Upload size={20} className="text-secondary" />
+                  <span className="font-body text-xs text-secondary">Upload</span>
+                  <input type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowBridePicker(true)}
+                  className="inline-flex items-center gap-1 rounded-btn border border-line px-2.5 py-1.5 font-body text-[11px] font-500 text-secondary transition-colors hover:bg-card"
+                >
+                  <ImageIcon size={12} />
+                  Library
+                </button>
+              </div>
             ) : (
               <div className="relative">
                 <img src={form.preview} alt="Preview" className="h-32 w-32 rounded-btn border border-line object-cover" />
@@ -165,9 +188,18 @@ export default function BridesPage() {
           </div>
           <div>
             <FieldLabel>Occasion</FieldLabel>
-            <AdminSelect value={form.occasion} onChange={(e) => setForm({ ...form, occasion: e.target.value })}>
+            <AdminSelect value={form.occasion} onChange={(e) => { setForm({ ...form, occasion: e.target.value }); setCustomOccasion(''); }}>
               {OCCASIONS.map((o) => (<option key={o} value={o}>{o}</option>))}
+              <option value={CUSTOM_VALUE}>+ Custom Occasion</option>
             </AdminSelect>
+            {form.occasion === CUSTOM_VALUE && (
+              <AdminInput
+                value={customOccasion}
+                onChange={(e) => setCustomOccasion(e.target.value)}
+                placeholder="Enter occasion name…"
+                className="mt-2"
+              />
+            )}
           </div>
         </div>
         <div className="mt-6">
@@ -235,6 +267,18 @@ export default function BridesPage() {
       {editingBride && (
         <GalleryManager bride={editingBride} onClose={() => { setEditingBride(null); fetchBrides(); }} />
       )}
+
+      {/* ── Media Picker ── */}
+      <MediaPicker
+        open={showBridePicker}
+        onClose={() => setShowBridePicker(false)}
+        onSelect={(url) => {
+          setForm((prev) => ({ ...prev, preview: url, file: null, _libraryUrl: url }));
+          setShowBridePicker(false);
+        }}
+        type="image"
+        title="Choose Bride Photo"
+      />
     </div>
   );
 }

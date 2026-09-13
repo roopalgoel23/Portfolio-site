@@ -10,13 +10,6 @@ import api, { assetUrl } from '../api/axios';
 import useFetch from '../hooks/useFetch';
 import SectionSkeleton from './SectionSkeleton';
 
-const FALLBACK_BRIDES = [
-  { name: 'Priya Sharma',  occasion: 'Wedding',    image: 'https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=1000&q=80' },
-  { name: 'Anjali Verma',  occasion: 'Engagement', image: 'https://images.unsplash.com/photo-1595959183082-7b570b7e08e2?auto=format&fit=crop&w=1000&q=80' },
-  { name: 'Neha Gupta',    occasion: 'Reception',  image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1000&q=80' },
-  { name: 'Riya Malhotra', occasion: 'Mehendi',    image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1000&q=80' }
-];
-
 export default function FeaturedBridesSection() {
   const { data: brides, loading, error } = useFetch(
     () => api.get('/api/brides').then((r) => r.data)
@@ -29,8 +22,8 @@ export default function FeaturedBridesSection() {
   const goPrev = useCallback(() => swiperRef.current?.slidePrev(), []);
 
   const items = (() => {
-    if (!brides || !brides.length) return FALLBACK_BRIDES;
-    const mapped = brides
+    if (!brides || !brides.length) return [];
+    return brides
       .map((b) => {
         let thumb = b.image || '';
         if (b.gallery && b.gallery.length > 0) {
@@ -42,7 +35,6 @@ export default function FeaturedBridesSection() {
         return { ...b, displayImage: thumb ? assetUrl(thumb) : '', gallery: (b.gallery || []).map((g) => ({ ...g, src: assetUrl(g.src), videoUrl: g.videoUrl ? assetUrl(g.videoUrl) : '' })) };
       })
       .filter((b) => b.displayImage);
-    return mapped.length ? mapped : FALLBACK_BRIDES;
   })();
 
   const openGallery = useCallback((bride) => {
@@ -54,6 +46,7 @@ export default function FeaturedBridesSection() {
   }, []);
 
   if (error) return null;
+  if (!loading && items.length === 0) return null;
 
   return (
     <section id="brides" className="bg-base py-24">

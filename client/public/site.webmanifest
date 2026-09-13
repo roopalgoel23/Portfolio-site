@@ -1,0 +1,32 @@
+{
+  "name": "Makeup by Roopal Goel — Bridal Makeup Artist",
+  "short_name": "Roopal Goel",
+  "description": "Luxury bridal makeup artist in Delhi. HD wedding, engagement, mehendi & party makeup.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF5F2",
+  "theme_color": "#FAF5F2",
+  "orientation": "portrait-primary",
+  "lang": "en-IN",
+  "categories": ["beauty", "lifestyle", "shopping"],
+  "icons": [
+    {
+      "src": "/Logo2.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/Logo2.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { Upload, Trash2, Play, ImageIcon, Video, X, Loader2, Link2 } from 'lucide-react';
+import { Upload, Trash2, Play, ImageIcon, Video, X, Loader2, Link2, Plus, ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
 import api, { assetUrl } from '../../api/axios';
 import {
   FieldLabel,
@@ -12,8 +12,10 @@ import {
   IconButton
 } from '../components/AdminUI';
 import { useConfirm } from '../components/ConfirmModal';
+import MediaPicker from '../components/MediaPicker';
 
-const CATEGORIES = ['bridal', 'engagement', 'mehendi', 'party'];
+const CATEGORIES = ['bridal', 'engagement', 'mehendi', 'party', 'editorial', 'pre-wedding'];
+const CUSTOM_VALUE = '__custom__';
 
 const TABS = [
   { key: 'photo', label: 'Photo', icon: ImageIcon },
@@ -45,6 +47,10 @@ export default function PortfolioPage() {
   });
   const [addingVideo, setAddingVideo] = useState(false);
   const [videoMode, setVideoMode] = useState('upload'); // 'upload' or 'url'
+  const [customCat, setCustomCat] = useState(''); // custom category text for photos
+  const [customCatVideo, setCustomCatVideo] = useState(''); // custom category text for videos
+  const [showPhotoPicker, setShowPhotoPicker] = useState(false);
+  const [showVideoPicker, setShowVideoPicker] = useState(false);
 
   // ── Fetch ──
   const fetchItems = useCallback(async () => {
@@ -73,32 +79,40 @@ export default function PortfolioPage() {
 
   // ── Photo: upload ──
   const handlePhotoUpload = async () => {
-    if (!photoForm.file) {
+    if (!photoForm.file && !photoForm._libraryUrl) {
       toast.error('Please select an image');
       return;
     }
     setUploadingPhoto(true);
     try {
-      // Upload file to get server-side path
-      const formData = new FormData();
-      formData.append('file', photoForm.file);
+      let src;
+      if (photoForm._libraryUrl) {
+        // Use existing image from library
+        src = photoForm._libraryUrl;
+      } else {
+        // Upload file to get server-side path
+        const formData = new FormData();
+        formData.append('file', photoForm.file);
+        const { data: uploadData } = await api.post('/api/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        src = uploadData.path;
+      }
 
-      const { data: uploadData } = await api.post('/api/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-
-      const src = uploadData.path;
+      const resolvedCat = photoForm.category === CUSTOM_VALUE ? customCat.trim().toLowerCase() : photoForm.category;
+      if (!resolvedCat) { toast.error('Please enter a category name'); return; }
 
       const { data } = await api.post('/api/portfolio', {
         type: 'photo',
-        category: photoForm.category,
+        category: resolvedCat,
         src,
         caption: photoForm.caption,
         order: items.length
       });
 
       setItems([...items, data]);
-      setPhotoForm({ file: null, preview: '', category: 'bridal', caption: '' });
+      setPhotoForm({ file: null, preview: '', category: 'bridal', caption: '', _libraryUrl: null });
+      setCustomCat('');
       toast.success('Photo added to portfolio!');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to upload photo');
@@ -133,9 +147,12 @@ export default function PortfolioPage() {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
 
+        const resolvedCat = videoForm.category === CUSTOM_VALUE ? customCatVideo.trim().toLowerCase() : videoForm.category;
+        if (!resolvedCat) { toast.error('Please enter a category name'); return; }
+
         const { data } = await api.post('/api/portfolio', {
           type: 'video',
-          category: videoForm.category,
+          category: resolvedCat,
           src: uploadData.path,
           videoUrl: uploadData.path,
           caption: videoForm.caption,
@@ -143,6 +160,7 @@ export default function PortfolioPage() {
         });
         setItems([...items, data]);
         setVideoForm({ file: null, preview: '', videoUrl: '', category: 'bridal', caption: '' });
+        setCustomCatVideo('');
         toast.success('Video added to portfolio!');
       } catch (err) {
         toast.error(err.response?.data?.message || 'Failed to upload video');
@@ -156,15 +174,19 @@ export default function PortfolioPage() {
       }
       setAddingVideo(true);
       try {
+        const resolvedCat = videoForm.category === CUSTOM_VALUE ? customCatVideo.trim().toLowerCase() : videoForm.category;
+        if (!resolvedCat) { toast.error('Please enter a category name'); return; }
+
         const { data } = await api.post('/api/portfolio', {
           type: 'video',
-          category: videoForm.category,
+          category: resolvedCat,
           videoUrl: videoForm.videoUrl,
           caption: videoForm.caption,
           order: items.length
         });
         setItems([...items, data]);
         setVideoForm({ file: null, preview: '', videoUrl: '', category: 'bridal', caption: '' });
+        setCustomCatVideo('');
         toast.success('Video added to portfolio!');
       } catch (err) {
         toast.error(err.response?.data?.message || 'Failed to add video');
@@ -187,6 +209,61 @@ export default function PortfolioPage() {
       toast.success('Item deleted');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to delete');
+    }
+  };
+
+  // ── Reorder (arrow buttons) ──
+  const handleReorder = async (index, dir) => {
+    const newIndex = index + dir;
+    if (newIndex < 0 || newIndex >= items.length) return;
+    const reordered = [...items];
+    [reordered[index], reordered[newIndex]] = [reordered[newIndex], reordered[index]];
+    const updated = reordered.map((item, i) => ({ ...item, order: i }));
+    setItems(updated);
+    try {
+      await api.post('/api/portfolio/reorder', {
+        order: updated.map((item) => ({ id: item._id, order: item.order }))
+      });
+    } catch {
+      toast.error('Failed to update order');
+      fetchItems();
+    }
+  };
+
+  // ── Drag and drop reorder ──
+  const [dragIndex, setDragIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+
+  const handleDragStart = (index) => {
+    setDragIndex(index);
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    setDragOverIndex(index);
+  };
+
+  const handleDrop = async (index) => {
+    if (dragIndex === null || dragIndex === index) {
+      setDragIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+    const reordered = [...items];
+    const [moved] = reordered.splice(dragIndex, 1);
+    reordered.splice(index, 0, moved);
+    const updated = reordered.map((item, i) => ({ ...item, order: i }));
+    setItems(updated);
+    setDragIndex(null);
+    setDragOverIndex(null);
+    try {
+      await api.post('/api/portfolio/reorder', {
+        order: updated.map((item) => ({ id: item._id, order: item.order }))
+      });
+      toast.success('Order updated');
+    } catch {
+      toast.error('Failed to update order');
+      fetchItems();
     }
   };
 
@@ -233,23 +310,33 @@ export default function PortfolioPage() {
           {/* Drop zone */}
           <div className="mb-5">
             {!photoForm.preview ? (
-              <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-btn border-2 border-dashed border-line py-12 transition-colors duration-300 hover:border-accentHover">
-                <Upload size={32} className="text-secondary" />
-                <div className="text-center">
-                  <p className="font-body text-sm font-600 text-primary">
-                    Click to upload or drag &amp; drop
-                  </p>
-                  <p className="font-body text-xs text-secondary">
-                    JPEG, PNG, WEBP up to 100MB
-                  </p>
-                </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-              </label>
+              <div className="flex flex-col items-center gap-3">
+                <label className="flex w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-btn border-2 border-dashed border-line py-12 transition-colors duration-300 hover:border-accentHover">
+                  <Upload size={32} className="text-secondary" />
+                  <div className="text-center">
+                    <p className="font-body text-sm font-600 text-primary">
+                      Click to upload or drag &amp; drop
+                    </p>
+                    <p className="font-body text-xs text-secondary">
+                      JPEG, PNG, WEBP up to 100MB
+                    </p>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPhotoPicker(true)}
+                  className="inline-flex items-center gap-1.5 rounded-btn border border-line px-4 py-2 font-body text-xs font-500 text-secondary transition-colors hover:bg-card"
+                >
+                  <ImageIcon size={14} />
+                  Browse Existing Images
+                </button>
+              </div>
             ) : (
               <div className="relative inline-block">
                 <img
@@ -272,14 +359,26 @@ export default function PortfolioPage() {
               <FieldLabel>Category</FieldLabel>
               <AdminSelect
                 value={photoForm.category}
-                onChange={(e) => setPhotoForm({ ...photoForm, category: e.target.value })}
+                onChange={(e) => {
+                  setPhotoForm({ ...photoForm, category: e.target.value });
+                  setCustomCat('');
+                }}
               >
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>
                     {c.charAt(0).toUpperCase() + c.slice(1)}
                   </option>
                 ))}
+                <option value={CUSTOM_VALUE}>+ Custom Category</option>
               </AdminSelect>
+              {photoForm.category === CUSTOM_VALUE && (
+                <AdminInput
+                  value={customCat}
+                  onChange={(e) => setCustomCat(e.target.value)}
+                  placeholder="Enter category name…"
+                  className="mt-2"
+                />
+              )}
             </div>
             <div>
               <FieldLabel>Caption</FieldLabel>
@@ -400,14 +499,26 @@ export default function PortfolioPage() {
               <FieldLabel>Category</FieldLabel>
               <AdminSelect
                 value={videoForm.category}
-                onChange={(e) => setVideoForm({ ...videoForm, category: e.target.value })}
+                onChange={(e) => {
+                  setVideoForm({ ...videoForm, category: e.target.value });
+                  setCustomCatVideo('');
+                }}
               >
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>
                     {c.charAt(0).toUpperCase() + c.slice(1)}
                   </option>
                 ))}
+                <option value={CUSTOM_VALUE}>+ Custom Category</option>
               </AdminSelect>
+              {videoForm.category === CUSTOM_VALUE && (
+                <AdminInput
+                  value={customCatVideo}
+                  onChange={(e) => setCustomCatVideo(e.target.value)}
+                  placeholder="Enter category name…"
+                  className="mt-2"
+                />
+              )}
             </div>
             <div>
               <FieldLabel>Caption</FieldLabel>
@@ -438,14 +549,33 @@ export default function PortfolioPage() {
 
       {/* ── Existing items grid ── */}
       <div>
-        <h3 className="mb-4 font-heading text-lg font-600 text-primary">
-          Gallery Items ({items.length})
-        </h3>
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="font-heading text-lg font-600 text-primary">
+            Gallery Items ({items.length})
+          </h3>
+          {items.length > 1 && (
+            <p className="font-body text-xs text-secondary">
+              <GripVertical size={12} className="mb-0.5 inline" />
+              Drag to reorder or use arrows
+            </p>
+          )}
+        </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {items.map((item) => (
+          {items.map((item, index) => (
             <div
               key={item._id}
-              className="group relative overflow-hidden rounded-card border border-line bg-card"
+              draggable
+              onDragStart={() => handleDragStart(index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDrop={() => handleDrop(index)}
+              onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+              className={`group relative overflow-hidden rounded-card border bg-card transition-all duration-200 ${
+                dragOverIndex === index && dragIndex !== null && dragIndex !== index
+                  ? 'border-accentHover ring-2 ring-accentHover scale-[1.02]'
+                  : dragIndex === index
+                    ? 'border-line opacity-40'
+                    : 'border-line'
+              }`}
             >
               {/* Image / Video thumbnail */}
               <div className="relative aspect-square">
@@ -483,13 +613,36 @@ export default function PortfolioPage() {
                 </div>
               )}
 
-              {/* Delete on hover */}
-              <button
-                onClick={() => handleDelete(item._id)}
-                className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-              >
-                <Trash2 size={14} />
-              </button>
+              {/* Hover controls */}
+              <div className="absolute right-2 top-2 flex items-center gap-1.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                {/* Drag handle */}
+                <div className="flex h-7 w-7 cursor-grab items-center justify-center rounded-full bg-white/80 text-secondary active:cursor-grabbing">
+                  <GripVertical size={14} />
+                </div>
+                {/* Move up */}
+                <button
+                  onClick={() => handleReorder(index, -1)}
+                  disabled={index === 0}
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-primary transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  <ChevronUp size={14} />
+                </button>
+                {/* Move down */}
+                <button
+                  onClick={() => handleReorder(index, 1)}
+                  disabled={index === items.length - 1}
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-primary transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  <ChevronDown size={14} />
+                </button>
+                {/* Delete */}
+                <button
+                  onClick={() => handleDelete(item._id)}
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white transition-colors hover:bg-red-500"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -502,6 +655,18 @@ export default function PortfolioPage() {
           </AdminCard>
         )}
       </div>
+
+      {/* ── Media Pickers ── */}
+      <MediaPicker
+        open={showPhotoPicker}
+        onClose={() => setShowPhotoPicker(false)}
+        onSelect={(url) => {
+          setPhotoForm((prev) => ({ ...prev, preview: url, file: null, _libraryUrl: url }));
+          setShowPhotoPicker(false);
+        }}
+        type="image"
+        title="Choose Portfolio Photo"
+      />
     </div>
   );
 }
